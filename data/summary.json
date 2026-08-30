@@ -1,0 +1,202 @@
+{
+  "scrgb": {
+    "description": "prototype PQ-linear ramp, FP16 scRGB swapchain",
+    "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=4000 MaxFALL=400 DML=0..4000",
+    "frames": 60,
+    "roi_xywh": [
+      0,
+      1800,
+      3840,
+      8
+    ],
+    "ramp_row_in_roi": 4,
+    "pixels_varying_between_frames_whole_frame_pct": 0.0,
+    "ramp_row_pixels_varying_between_frames": 0,
+    "ramp_row_step_width_histogram": {
+      "4": 397,
+      "5": 449
+    },
+    "ramp_row_adjacent_diff_values": [
+      0,
+      1
+    ]
+  },
+  "hdr10": {
+    "description": "prototype PQ-linear ramp, R10G10B10A2 HDR10 swapchain",
+    "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=4000 MaxFALL=400 DML=0..4000",
+    "frames": 60,
+    "roi_xywh": [
+      0,
+      1800,
+      3840,
+      8
+    ],
+    "ramp_row_in_roi": 4,
+    "pixels_varying_between_frames_whole_frame_pct": 0.0,
+    "ramp_row_pixels_varying_between_frames": 0,
+    "ramp_row_step_width_histogram": {
+      "4": 428,
+      "5": 244,
+      "6": 78,
+      "8": 12,
+      "9": 23,
+      "10": 12,
+      "11": 1
+    },
+    "ramp_row_adjacent_diff_values": [
+      0,
+      1,
+      2
+    ]
+  },
+  "app_scrgb": {
+    "description": "10-bit YCbCr limited ramp video via viewer app, FP16 scRGB swapchain",
+    "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=4000 MaxFALL=400 DML=0..4000",
+    "frames": 60,
+    "roi_xywh": [
+      0,
+      536,
+      3840,
+      8
+    ],
+    "ramp_row_in_roi": 4,
+    "pixels_varying_between_frames_whole_frame_pct": 0.0,
+    "ramp_row_pixels_varying_between_frames": 0,
+    "ramp_row_step_width_histogram": {
+      "2": 1750,
+      "4": 1
+    },
+    "ramp_row_adjacent_diff_values": [
+      -2,
+      -1,
+      0,
+      1,
+      2
+    ]
+  },
+  "app_hdr10": {
+    "description": "10-bit YCbCr limited ramp video via viewer app, R10G10B10A2 HDR10 swapchain",
+    "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=4000 MaxFALL=400 DML=0..4000",
+    "frames": 60,
+    "roi_xywh": [
+      0,
+      536,
+      3840,
+      8
+    ],
+    "ramp_row_in_roi": 4,
+    "pixels_varying_between_frames_whole_frame_pct": 0.0,
+    "ramp_row_pixels_varying_between_frames": 0,
+    "ramp_row_step_width_histogram": {
+      "2": 1580,
+      "4": 85
+    },
+    "ramp_row_adjacent_diff_values": [
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3
+    ]
+  },
+  "prototype_patches": [
+    {
+      "nit": 2,
+      "expected": 193,
+      "scrgb": 192,
+      "hdr10": 193
+    },
+    {
+      "nit": 5,
+      "expected": 254,
+      "scrgb": 253,
+      "hdr10": 255
+    },
+    {
+      "nit": 10,
+      "expected": 307,
+      "scrgb": 306,
+      "hdr10": 307
+    },
+    {
+      "nit": 20,
+      "expected": 365,
+      "scrgb": 365,
+      "hdr10": 366
+    },
+    {
+      "nit": 40,
+      "expected": 429,
+      "scrgb": 429,
+      "hdr10": 430
+    },
+    {
+      "nit": 80,
+      "expected": 497,
+      "scrgb": 497,
+      "hdr10": 497
+    },
+    {
+      "nit": 120,
+      "expected": 539,
+      "scrgb": 539,
+      "hdr10": 539
+    },
+    {
+      "nit": 160,
+      "expected": 569,
+      "scrgb": 569,
+      "hdr10": 570
+    },
+    {
+      "nit": 203,
+      "expected": 594,
+      "scrgb": 594,
+      "hdr10": 594
+    },
+    {
+      "nit": 300,
+      "expected": 636,
+      "scrgb": 636,
+      "hdr10": 637
+    },
+    {
+      "nit": 400,
+      "expected": 668,
+      "scrgb": 668,
+      "hdr10": 668
+    },
+    {
+      "nit": 600,
+      "expected": 712,
+      "scrgb": 712,
+      "hdr10": 713
+    },
+    {
+      "nit": 800,
+      "expected": 744,
+      "scrgb": 744,
+      "hdr10": 745
+    },
+    {
+      "nit": 1000,
+      "expected": 769,
+      "scrgb": 769,
+      "hdr10": 769
+    },
+    {
+      "nit": 1500,
+      "expected": 814,
+      "scrgb": 815,
+      "hdr10": 815
+    },
+    {
+      "nit": 2000,
+      "expected": 846,
+      "scrgb": 847,
+      "hdr10": 848
+    }
+  ]
+}

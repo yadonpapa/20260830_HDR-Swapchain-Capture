@@ -1,0 +1,7 @@
+# 改行コード正規化。core.autocrlf 設定に依らず LF↔CRLF 警告を出さない。
+* text=auto eol=lf
+
+*.png   binary
+*.jpg   binary
+*.npz   binary
+*.zip   binary

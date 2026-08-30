@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+outputs/
+*.npz
+*.exe
+*.dll
+*.lib
+*.exp
+decklink_core/build/
+.DS_Store
+Thumbs.db

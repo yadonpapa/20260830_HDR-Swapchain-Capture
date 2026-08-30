@@ -1,0 +1,14 @@
+[project]
+name = "hdr-swapchain-capture"
+version = "0.1.0"
+description = "Measure what a Windows HDR app actually puts on the HDMI wire: scRGB (FP16) vs HDR10 (R10G10B10A2) swapchains, captured with a Blackmagic DeckLink."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=2.0",
+    "PyQt6>=6.9",
+]
+
+[tool.uv]
+package = false

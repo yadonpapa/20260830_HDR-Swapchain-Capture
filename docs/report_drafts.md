@@ -58,7 +58,10 @@ Practical takeaway (limited to what I measured: RTX 50 series, fullscreen Indepe
   default on this hardware. I have not tested other GPU generations or drivers, so I would not generalise
   beyond RTX 50 + this driver range.
 
-Happy to share the raw captures (numpy .npz) and the capture/analysis scripts if useful.
+Reproduction package (MIT): test-pattern window, DeckLink capture/analysis scripts, the DeckLink wrapper source,
+the step-by-step procedure and the captured ramp rows / patch tables as CSV are at
+https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture
+Raw .npz captures available on request.
 ```
 
 ---
@@ -107,7 +110,8 @@ What does / does not help
 
 So the HDR capability check in the D3D11 swapchain (isFormatSupported / output lookup for the window)
 seems to break under high-DPI scaling of the target screen, and the fallback is silent (debug-level log only).
-A minimal PyQt6 reproducer and a DXGI output dump tool are available.
+Reproducer (PyQt6 test-pattern window with --mode scrgb|hdr10 and --screen), the DXGI output dump tool and the
+capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (tools/proto_hdr_view.py, tools/dxgi_outputs.cpp, docs/RESULTS.md §4).
 ```
 
 ---
@@ -167,7 +171,8 @@ A minimal PyQt6 reproducer and a DXGI output dump tool are available.
   量子化を加えるためです。計測・リファレンス表示用途のアプリでは、このハードウェアでは scRGB を既定にするのが安全です。
   他世代の GPU や他ドライバは未検証なので、RTX 50 系＋このドライバ範囲以上には一般化しません。
 
-生の取り込みデータ（numpy .npz）と取り込み/解析スクリプトは必要なら提供できます。
+再現パッケージ（MIT）: テストパターン表示、DeckLink 取り込み/解析スクリプト、DeckLink ラッパーのソース、手順書、
+取り込んだランプ行とパッチ表の CSV を https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています。生の .npz は要望があれば提供します。
 ```
 
 ### 4.2 Qt バグ報告の日本語版
@@ -208,5 +213,6 @@ A minimal PyQt6 reproducer and a DXGI output dump tool are available.
 
 したがって D3D11 スワップチェーンの HDR 可否判定（isFormatSupported／ウィンドウに対する出力の照合）が対象画面の高 DPI
 スケーリング下で壊れており、しかもフォールバックは無言（debug レベルのログのみ）です。
-最小の PyQt6 再現コードと DXGI 出力ダンプツールを提供できます。
+再現コード（PyQt6 のテストパターン表示 --mode scrgb|hdr10 / --screen）、DXGI 出力ダンプツール、取り込みの証拠は
+https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています（tools/proto_hdr_view.py、tools/dxgi_outputs.cpp、docs/RESULTS.md §4）。
 ```

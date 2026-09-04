@@ -37,6 +37,9 @@ is not a comparable reference (and unsuitable for code‑level capture work). Ge
 out of a GeForce into the 8K Pro G2 needed NVIDIA CP *No scaling + Perform scaling on: Display* and a
 re‑applied 10 bpc — see `docs/PROCEDURE.md` §7.
 
+What the public record says about **RTX 40**, **driver branches** and **AMD Radeon** (and why AMD and RTX 40 are the next
+measurements worth taking) is collected in `docs/RESEARCH_NOTES.md`.
+
 Related threads: NVIDIA Developer Forums
 [346429](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429) /
 [343119](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/343119);
@@ -57,6 +60,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
+| `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering — with implications for the next measurements (EN summary + full JA notes) |
 
 ## Quick start
 
@@ -109,3 +113,6 @@ HDMI 2.1 入力で実施（716/716 Present が Independent Flip）。Ampere は�
 Ampere は比較対象にならない（コード値照合の計測にも不向き）。GeForce → 8K Pro G2 で 4K 10bpc のネイティブ
 タイミングを出すには NVIDIA CP の「スケーリングなし＋実行デバイス＝ディスプレイ」と 10 bpc の再適用が必要
 （`docs/PROCEDURE.md` §7）。詳細は `docs/RESULTS.md` §7・データは `data/osaka3070_*`。
+
+RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について
+公開情報を調べた結果（次に計測すべき対象の根拠）は `docs/RESEARCH_NOTES.md`。

@@ -73,6 +73,65 @@ does. The first two captures of the day were invalid because of this — always 
 
 See `docs/report_drafts.md` (English text for the NVIDIA thread reply and the Qt bug report, with Japanese versions).
 
+## 6. Follow‑up (2026‑09‑04): presentation‑path‑verified re‑measurement + composition control
+
+The 2026‑08‑30 numbers above were taken fullscreen but **without recording the presentation path**; a later
+finding (interacting with other windows can silently demote a fullscreen window to DWM composition) made
+that a gap worth closing. Re‑measured with PresentMon running **concurrently with every capture**.
+
+### Environment (deliberately varied from 08‑30)
+
+* Second unit of the same laptop model (RTX 5090 Laptop GPU), driver **610.62** (08‑30: Studio 596.36)
+* Capture: **Blackmagic UltraStudio 4K Mini** (Thunderbolt) HDMI input — no HDFury; the UltraStudio's own
+  HDMI‑input EDID advertises HDR10 (PQ) and RGB 10‑bit (DC_30bit), so the GPU drives it directly
+* Same signal: 3840×2160 @ 23.976 Hz RGB 4:4:4 10 bpc full, HDR InfoFrame eotf=PQ (r210 capture)
+* Pattern window presents continuously (`--present-loop`; a static Qt Quick scene stops presenting and
+  becomes invisible to PresentMon), `QT_D3D_ADAPTER_INDEX` pinned to the NVIDIA adapter (hybrid‑GPU laptop)
+
+### Results with `PresentMode = Hardware: Independent Flip` for every present during capture
+
+| Swapchain | Steps (ideal 4.53 px) | 2‑code jumps | Patches | Temporal |
+|---|---|---|---|---|
+| FP16 scRGB | only 4/5 px (σ 0.50), monotonic | 0 | ±1 | 0 changed pixels |
+| R10G10B10A2 HDR10 | 4 … 11 px (σ 1.27) | **49 — the same count as 08‑30** | many +1 | 0 changed pixels |
+
+Identical numbers on a different unit, different capture device, different EDID chain and a newer driver —
+the 08‑30 conclusion stands, now with the Independent Flip precondition proven
+(`data/m25_*_ramp_row.csv`, `data/m25_summary.json`).
+
+**New observation**: the 49 skipped codes are quasi‑periodic, ≈ 16 codes apart
+(16, 32, 79, 112, 172, 189, 204, 220, …, 838 — full list in `m25_summary.json`), which suggests a
+piecewise‑linear LUT (segment boundaries every ~16 codes) in the scanout‑path quantiser.
+
+### Control: the same captures with the window demoted to DWM composition (`Composed: Flip` verified)
+
+| Swapchain | vs Independent Flip |
+|---|---|
+| FP16 scRGB | ramp row **bit‑identical** (0 differing pixels) |
+| R10G10B10A2 HDR10 | the periodic mid‑tone jumps **disappear entirely**; instead 23 near‑black codes (all ≤ 144: 1, 4, 9, 16, 37, …) are skipped — consistent with DWM converting the PQ swapchain into its FP16 linear canvas and the output stage re‑encoding to PQ (the same exit the scRGB path uses) |
+
+This is the missing piece: **the uneven quantisation is specific to the direct scanout path of the
+R10G10B10A2 fullscreen swapchain** (it vanishes under composition, matching the "windowed looks clean"
+observations in the NVIDIA forum threads), and the scRGB path is byte‑exact regardless of composition.
+
+Side note on demotion: merely moving focus to a window on *another* screen did **not** demote the
+fullscreen window (still Independent Flip); occlusion by a window on the *same* screen did.
+
+---
+
+### 日本語（追補 2026‑09‑04）
+
+* 8/30 と同条件の再計測を、**取り込みと同時刻の PresentMon 記録付き**（全 Present が
+  Hardware: Independent Flip）で実施。別個体（同一機種）・別キャプチャ（UltraStudio 4K Mini・
+  Vertex 無し）・新ドライバ **610.62** でも、段幅分布・2 コード飛び **49 箇所（同数）** まで一致
+  ＝ 8/30 の結論を経路確認付きで確定。
+* 新知見: 飛びは**約 16 コード周期の準周期**（16, 32, 79, 112, …, 838）＝スキャンアウト段の
+  区分線形 LUT（セグメント境界）を示唆。
+* 対照計測（Composed: Flip 確認付き）: scRGB はランプ行が**完全ビット一致**・HDR10 は中間調の
+  周期飛びが**全消滅**し近黒（≤144）の 23 コード欠落に置換（DWM の PQ→FP16→PQ 往復）。
+  ＝不均一は **R10G10B10A2 全画面の直接スキャンアウト経路に固有**。
+* 付随: 別画面へのフォーカス移動だけでは iFlip は落ちない（合成への降格は同一画面上の遮蔽で発生）。
+
 ---
 
 ## 日本語要約

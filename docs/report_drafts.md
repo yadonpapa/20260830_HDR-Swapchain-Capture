@@ -66,6 +66,46 @@ Raw .npz captures available on request.
 
 ---
 
+## 1b. NVIDIA フォーラムへの追補（2026-09-04・投稿用文案）
+
+- 前回返信（§1）への追加投稿。経路確認付き再計測＋対照計測の要点と、約 16 コード周期という
+  新しい手掛かりを伝える。
+
+```text
+Follow-up with new evidence: presentation-path-verified re-measurement, a newer driver, and a
+composition control that isolates the defect to the direct scanout path.
+
+1) Re-measurement with the presentation path recorded
+My earlier measurement assumed Independent Flip but did not record it. I repeated it with PresentMon
+running concurrently with every capture: every present of the pattern window during capture was
+"Hardware: Independent Flip" (~24 presents/s, no drops). Environment changes on purpose:
+- a second unit of the same laptop model (RTX 5090 Laptop GPU)
+- driver 610.62 (previously Studio 596.36) - the issue persists on the newer driver
+- a different capture device (Blackmagic UltraStudio 4K Mini, no HDFury in the chain; its HDMI-input
+  EDID advertises HDR10 + RGB 10-bit itself), same signal: 2160p23.976 RGB 4:4:4 10 bpc full, PQ.
+Result: identical numbers, including the SAME 49 two-code jumps in the PQ-linear ramp
+(scRGB: only 4/5-px steps, monotonic, 0 jumps, patches within ±1 - also identical to before).
+
+2) New observation: the skipped codes are quasi-periodic, roughly every 16 codes
+(16, 32, 79, 112, 172, 189, 204, 220, 236, 251, 269, 285, 299, 315, ..., 838; full list in the repo,
+data/m25_summary.json). This looks like segment boundaries of a piecewise-linear LUT in the scanout
+path quantiser.
+
+3) Composition control (same app, same swapchains, window deliberately occluded so PresentMon shows
+"Composed: Flip" for every present):
+- R10G10B10A2: the periodic mid-tone jumps disappear entirely. The only artifacts left are 23 skipped
+  codes near black (all <= code 144: 1, 4, 9, 16, 37, ...), consistent with DWM converting the PQ
+  swapchain into its FP16 linear canvas and the output stage re-encoding to PQ.
+- FP16 scRGB: the captured ramp row is bit-identical between Independent Flip and composition.
+This matches the "windowed looks clean" observations in this thread and pins the uneven quantisation
+to the direct scanout path of the R10G10B10A2 fullscreen swapchain.
+
+Updated data, procedure (including the PresentMon verification step) and the pattern tool are in the
+same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (data/m25_*).
+```
+
+---
+
 ## 2. Qt バグトラッカー（新規 issue）
 
 - 報告先: https://bugreports.qt.io/ → 「Create」→ Project **Qt (QTBUG)**、Component **GUI: RHI**（または
@@ -174,6 +214,19 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 再現パッケージ（MIT）: テストパターン表示、DeckLink 取り込み/解析スクリプト、DeckLink ラッパーのソース、手順書、
 取り込んだランプ行とパッチ表の CSV を https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています。生の .npz は要望があれば提供します。
 ```
+
+### 4.1b NVIDIA フォーラム追補の日本語版（記録用・2026-09-04）
+
+- **経路確認付き再計測**: PresentMon を取り込みと同時刻に走らせ、取り込み中の全 Present が
+  Hardware: Independent Flip であることを記録。同一機種の別個体・ドライバ 610.62（旧 596.36）・
+  別キャプチャ機（UltraStudio 4K Mini・HDFury 無し）で **2 コード飛び 49 箇所まで同一の結果**
+  ＝新ドライバでも継続。
+- **新知見**: 欠落コードは約 16 コード周期の準周期（16, 32, 79, 112, …, 838）
+  ＝スキャンアウト段の区分線形 LUT のセグメント境界を示唆。
+- **対照計測**（Composed: Flip 確認付き）: HDR10 の中間調周期飛びは合成で**全消滅**（残るのは
+  近黒 ≤144 の 23 コード欠落＝DWM の PQ→FP16→PQ 往復）・scRGB は iFlip と**完全ビット一致**。
+  ＝不均一は R10G10B10A2 全画面の**直接スキャンアウト経路に固有**（「ウィンドウ表示では消える」
+  報告と整合）。
 
 ### 4.2 Qt バグ報告の日本語版
 

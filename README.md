@@ -18,6 +18,15 @@ NVIDIA GeForce RTX 5090 Laptop GPU (Studio driver 596.36). Headline results:
 * Side finding: **Qt 6.11 silently falls back to an SDR swapchain** when the target screen uses 300 % scaling
   (`QT_ENABLE_HIGHDPI_SCALING=0` works around it). See `docs/RESULTS.md`.
 
+**Follow‑up 2026‑09‑04** (`docs/RESULTS.md` §6, `data/m25_*`): re‑measured with PresentMon running
+concurrently — every present during capture was `Hardware: Independent Flip` — on a **second unit** of the
+same laptop model, a **different capture device** (UltraStudio 4K Mini, no HDFury) and a **newer driver
+(610.62)**: identical numbers, including the same 49 two‑code jumps. The skipped codes are quasi‑periodic
+(≈ 16 codes apart), suggesting a piecewise‑linear LUT in the scanout path. A composition control
+(`Composed: Flip` verified) makes the periodic jumps **disappear** (replaced by 23 near‑black skips from
+DWM's PQ→FP16→PQ round trip) while the scRGB ramp stays **bit‑identical** — the uneven quantisation is
+specific to the direct scanout path of the R10G10B10A2 fullscreen swapchain.
+
 Related threads: NVIDIA Developer Forums
 [346429](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429) /
 [343119](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/343119).
@@ -26,14 +35,14 @@ Related threads: NVIDIA Developer Forums
 
 | Path | Purpose |
 |---|---|
-| `tools/proto_hdr_view.py` | Fullscreen Qt Quick test‑pattern window (PQ‑linear ramp 0→2000 nit + flat patches). `--mode scrgb\|hdr10\|srgb`, `--screen N`, `--list` |
+| `tools/proto_hdr_view.py` | Fullscreen Qt Quick test‑pattern window (PQ‑linear ramp 0→2000 nit + flat patches). `--mode scrgb\|hdr10\|srgb`, `--screen N`, `--list`, `--present-loop` (keep presenting every frame so PresentMon can log the presentation path) |
 | `tools/dither_capture.py` | Grab N consecutive frames from a DeckLink HDMI input as 10‑bit RGB (`r210`), per‑pixel min/max/mean, ROI time series → `.npz` |
 | `tools/dither_analyze.py` | Step‑width / monotonicity / temporal statistics of the ramp row |
 | `tools/make_ramp_y4m.py` | Synthetic 10‑bit limited‑range YCbCr ramp video (replaces the private test clip) |
 | `tools/dxgi_outputs.cpp` | Dump DXGI adapters/outputs with `ColorSpace`, bits, luminance — proves what Windows thinks the output is |
 | `tools/hdr_display.py`, `tools/pq.py` | Windows Advanced‑Color probe (ctypes) and PQ/sRGB curves |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json` |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 
@@ -73,3 +82,10 @@ HDFury で分配して Blackmagic DeckLink の HDMI 入力に取り込むこと�
 HDR スワップチェーンを無言で SDR に落とす問題（`QT_ENABLE_HIGHDPI_SCALING=0` で回避）も見つかっています。
 
 手順は `docs/PROCEDURE.md`、結果と外部報告文案は `docs/RESULTS.md`、生データは `data/`。
+
+**追補（2026‑09‑04）**: PresentMon を取り込みと同時刻に走らせ（全 Present が Hardware: Independent Flip）、
+同一機種の別個体・別キャプチャ機（UltraStudio 4K Mini・HDFury 無し）・新ドライバ 610.62 で再計測 →
+2 コード飛び 49 箇所まで**同一の結果**。飛びは約 16 コード周期＝スキャンアウト段の区分線形 LUT を示唆。
+対照計測（DWM 合成・Composed: Flip 確認付き）では周期飛びが**全消滅**（近黒 23 コードの欠落に置換）・
+scRGB は**完全ビット一致**＝不均一は R10G10B10A2 全画面の直接スキャンアウト経路に固有。
+詳細は `docs/RESULTS.md` §6・データは `data/m25_*`。

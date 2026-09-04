@@ -109,6 +109,9 @@ def main() -> int:
                     help="SDR 白レベル nits（0=表示先から検出。検出不可なら 203）")
     ap.add_argument("--windowed", action="store_true", help="全画面にせず窓表示")
     ap.add_argument("--auto-close", type=float, default=0.0, help="指定秒後に自動終了")
+    ap.add_argument("--present-loop", action="store_true",
+                    help="毎フレーム update() を要求して Present を出し続ける（静止シーンだと Qt は"
+                         " Present を止めるので、PresentMon で経路を観測するときに必須）")
     ap.add_argument("--list", action="store_true", help="画面一覧と HDR 状態を表示して終了")
     args = ap.parse_args()
 
@@ -237,6 +240,14 @@ def main() -> int:
     else:
         win.setGeometry(g)
         win.showFullScreen()
+
+    if args.present_loop:
+        # Qt Quick は静止シーンでは Present を発生させない（PresentMon に行が出ない）。
+        # 毎フレーム update() を要求して Present を継続させる。絵と符号化値は不変。
+        present_timer = QTimer()
+        present_timer.setInterval(5)
+        present_timer.timeout.connect(win.update)
+        present_timer.start()
 
     if args.auto_close > 0:
         # quit 直叩きでなく close 経由（レンダースレッドの後始末を通常経路で通す）

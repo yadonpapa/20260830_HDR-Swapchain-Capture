@@ -1,0 +1,213 @@
+{
+  "environment": {
+    "date": "2026-09-04",
+    "gpu": "NVIDIA GeForce RTX 5090 Laptop GPU (second unit of the same laptop model as 2026-08-30)",
+    "driver": "610.62",
+    "os": "Windows 11 Pro 26200",
+    "capture": "Blackmagic UltraStudio 4K Mini (Thunderbolt), HDMI in, r210 — no HDFury; the UltraStudio HDMI-input EDID itself advertises HDR10 (PQ) and RGB 10-bit (DC_30bit)",
+    "signal": "3840x2160 @ 23.976 Hz RGB 4:4:4 10 bpc full, HDR InfoFrame eotf=PQ",
+    "adapter_note": "hybrid GPU laptop: capture output owned by the NVIDIA adapter; QT_D3D_ADAPTER_INDEX=1 and QT_ENABLE_HIGHDPI_SCALING=0 set for the pattern window",
+    "path_verification": "PresentMon 2.5.1 recorded concurrently with every capture; the pattern window presented continuously (~24 pps, proto_hdr_view --present-loop equivalent)"
+  },
+  "captures": {
+    "m25_scrgb": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 397,
+        "5": 449
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1
+      ],
+      "two_code_jumps": 0,
+      "skipped_codes": [],
+      "presentmon": {
+        "present_mode": "Hardware: Independent Flip",
+        "presents": 596,
+        "window_s": 25
+      }
+    },
+    "m25_hdr10": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 428,
+        "5": 244,
+        "6": 78,
+        "8": 12,
+        "9": 23,
+        "10": 12,
+        "11": 1
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1,
+        2
+      ],
+      "two_code_jumps": 49,
+      "skipped_codes": [
+        16,
+        32,
+        79,
+        112,
+        172,
+        189,
+        204,
+        220,
+        236,
+        251,
+        269,
+        285,
+        299,
+        315,
+        331,
+        347,
+        365,
+        380,
+        395,
+        410,
+        427,
+        442,
+        444,
+        459,
+        475,
+        491,
+        506,
+        519,
+        535,
+        552,
+        567,
+        583,
+        598,
+        615,
+        631,
+        648,
+        662,
+        677,
+        694,
+        711,
+        726,
+        742,
+        758,
+        773,
+        790,
+        806,
+        808,
+        822,
+        838
+      ],
+      "presentmon": {
+        "present_mode": "Hardware: Independent Flip",
+        "presents": 596,
+        "window_s": 25
+      }
+    },
+    "m25_scrgb_composed": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 397,
+        "5": 449
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1
+      ],
+      "two_code_jumps": 0,
+      "skipped_codes": [],
+      "presentmon": {
+        "present_mode": "Composed: Flip",
+        "presents": 524,
+        "window_s": 22
+      }
+    },
+    "m25_hdr10_composed": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 466,
+        "5": 246,
+        "6": 88,
+        "7": 1,
+        "9": 19,
+        "10": 3
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1,
+        2
+      ],
+      "two_code_jumps": 23,
+      "skipped_codes": [
+        1,
+        4,
+        9,
+        16,
+        37,
+        45,
+        51,
+        54,
+        58,
+        61,
+        64,
+        71,
+        74,
+        77,
+        89,
+        104,
+        118,
+        121,
+        125,
+        130,
+        135,
+        141,
+        144
+      ],
+      "presentmon": {
+        "present_mode": "Composed: Flip",
+        "presents": 522,
+        "window_s": 22
+      }
+    }
+  },
+  "notes": [
+    "scRGB: the ramp row is bit-identical between Independent Flip and Composed (0 differing pixels).",
+    "HDR10 Independent Flip: 49 two-code jumps, quasi-periodic (~16 codes apart) across the whole range -> suggests a piecewise-linear LUT in the scanout path.",
+    "HDR10 Composed: the periodic mid-tone jumps disappear entirely; instead 23 near-black codes (all <= 144) are skipped - consistent with DWM converting the PQ swapchain into its FP16 linear canvas and the output stage re-encoding to PQ (same exit as scRGB).",
+    "Focus alone does not demote the fullscreen window to composition (verified: focus on another screen's window, still Independent Flip); occlusion by a window on the same screen does."
+  ]
+}

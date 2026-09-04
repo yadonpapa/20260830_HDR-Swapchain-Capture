@@ -173,7 +173,7 @@ Consequences:
   10‑bit quantisation of the R10G10B10A2 fullscreen path is therefore specific to the **true 10‑bit direct
   scanout of the RTX 50 series (Blackwell)**; Ampere shows a different, unrelated degradation that affects
   scRGB and HDR10 alike. The scope of the NVIDIA report is "RTX 50 series", with Ampere noted as
-  not comparable.
+  not comparable — posted to thread 346429 on 2026‑09‑04 (`docs/report_drafts.md` §1c).
 * For **code‑level measurement work** (capturing what an app puts on the wire) an Ampere GPU is unsuitable
   unless the values are time‑averaged; for visual checks on a reference monitor the dither is harmless.
 * Not tested: Windows HDR off (SDR 10 bpc), NVCP "default colour settings", YCbCr 4:2:2 12‑bit, other Ampere

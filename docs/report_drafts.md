@@ -106,10 +106,10 @@ same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (da
 
 ---
 
-## 1c. NVIDIA フォーラムへの追補 2（2026-09-04・世代切り分け・**未投稿・文案**）
+## 1c. NVIDIA フォーラムへの追補 2（2026-09-04・世代切り分け・**投稿済み**）
 
-- §1b への追加投稿案。Ampere（RTX 3070）で同計測を行い、報告の適用範囲を「RTX 50 系」に絞る根拠を伝える。
-  投稿はユーザーが行う（アカウントはユーザー本人）。
+- §1b への追加投稿。Ampere（RTX 3070）で同計測を行い、報告の適用範囲を「RTX 50 系」に絞る根拠を伝える。
+  **2026-09-04 にフォーラムへ投稿済み**（以下は投稿文の控え）。
 
 ```text
 Generation control: the same measurement on an Ampere GPU (GeForce RTX 3070, desktop, driver 610.62).
@@ -292,7 +292,7 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
   ＝不均一は R10G10B10A2 全画面の**直接スキャンアウト経路に固有**（「ウィンドウ表示では消える」
   報告と整合）。
 
-### 4.1c NVIDIA フォーラム追補 2 の日本語版（記録用・2026-09-04・未投稿）
+### 4.1c NVIDIA フォーラム追補 2 の日本語版（記録用・2026-09-04・投稿済み）
 
 - 世代切り分け: RTX 3070（Ampere・610.62）→ DeckLink 8K Pro G2 HDMI 2.1 入力、2160p23.976 RGB 10bpc PQ。
   リンク 10bpc を DisplayConfig / Windows ACI2 / DeckLink 検出の 3 点で確認、PresentMon 716/716 Independent Flip。

@@ -66,10 +66,10 @@ Raw .npz captures available on request.
 
 ---
 
-## 1b. NVIDIA フォーラムへの追補（2026-09-04・投稿用文案）
+## 1b. NVIDIA フォーラムへの追補（2026-09-04・**投稿済み**）
 
 - 前回返信（§1）への追加投稿。経路確認付き再計測＋対照計測の要点と、約 16 コード周期という
-  新しい手掛かりを伝える。
+  新しい手掛かりを伝える。**2026-09-04 にフォーラムへ投稿済み**（以下は投稿文の控え）。
 
 ```text
 Follow-up with new evidence: presentation-path-verified re-measurement, a newer driver, and a

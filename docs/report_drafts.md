@@ -108,8 +108,10 @@ same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (da
 
 ## 2. Qt バグトラッカー（新規 issue）
 
-- 報告先: https://bugreports.qt.io/ → 「Create」→ Project **Qt (QTBUG)**、Component **GUI: RHI**（または
-  **Quick: SceneGraph**）、Affects Version **6.11.0**、Platform **Windows**。Qt アカウント（無料）が必要。
+- 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
+  プロジェクト **Qt (QTBUG)**、コンポーネント **Qt RHI**（任意で **GUI: High-DPI** / **Quick: SceneGraph** を追加。
+  "GUI: RHI" という名前は存在しないので注意）、影響するバージョン **6.11.0**、Platform/s **Windows**。
+  Qt アカウント（無料）が必要。
 - 再現コードとして `tools/proto_hdr_view.py`（PyQt6）を最小化して添付できる。C++ で求められたら
   QQuickWindow ＋ `QSG_RHI_HDR=scrgb` の最小例に置き換える。
 

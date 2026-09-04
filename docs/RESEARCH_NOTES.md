@@ -99,8 +99,18 @@ RTX 3070＝10bit リンクでも 8bit 格子＋時空間ディザ）を受けて
   フォーラム 279427（A4000）でも同じ手法で「ドライバ導入後に時間ディザが自動有効化・真の 10bit モニタでも」と報告、
   NVIDIA 側は「OS のコントロールパネルで設定できる項目ではない」と回答のみ。→ 本リポジトリの 3070 実測（±4 トグル）と整合。
 - **[伝聞]** 同スレッドで一利用者が「消せない強いディザは RTX 2000/3000/**4000** 系すべての問題」と述べるが測定なし。
-- **[伝聞（主観）]** LEDStrain ユーザー ag3x: ディザ過敏症状ベースで「4090 は不快、**4070 Ti と 4060 は全く問題なし**、
-  5080/5070 Ti は不可」。測定なし。ただし「同じ Ada 内で機種差がある」示唆は、DSC/リンク条件依存の可能性を含めて注意点。
+- **[伝聞（主観）]** LEDStrain ユーザー ag3x（スレッド 3924）: ディザ過敏症状ベースで「4090 は不快、**4070 Ti と 4060 は
+  全く問題なし**、5080 は不可」。測定なし。**同スレッド後半に重要な訂正がある**: 使用モニター AW2723DF（8bit＋FRC、
+  DP 1.4・280 Hz 10bit 時は DSC）を真 8bit の ASUS XG27ACG に交換したところ「About half of the load disappeared
+  immediately; apparently these video cards amplify the monitor's FRC」「GPU dithering and monitor FRC do not work
+  together properly」と本人が結論（GPU ディザとモニター FRC の二段重ね＝うなりの機序。BD プレイヤー＋TV の
+  ディザ干渉と同型）。ただし真 8bit モニター＋NVCP 8bit 出力（バンディングが出る＝GPU ディザ停止）でも 4090 には
+  「about 20% of the strain remains」として返品、5070 Ti は新モニターでは「relatively okay」。残差は本人も
+  「GPU power / EMI」と推測するのみで未説明。→ **GPU 間差をモニターで説明することはできない**（モニターは同一）が、
+  **Ada の出力深度・ディザの証拠としてはほぼ価値が無い**（計測なし・交絡因子多数: OS ビルド、HDR off、MPO off、
+  ケーブル、モニター交換、ベンダー別基板。同じ AD10x で 4070 Ti 良・4090 悪は表示クラス共通と整合しない）。
+  見え方を評価する場面では**モニターの FRC（と DSC の有無）を独立変数として記録する**こと。本リポジトリの DeckLink
+  計測はモニターを経由しないため影響を受けない。
 - **[伝聞（NVIDIA サポート経由）]** Blur Busters（2025-07、RTX 50）: ユーザーが NVIDIA サポートから「新しい RTX カードは
   FRC をより積極的に使う」と言われたと報告。原文なし。
 - **[伝聞]** GeForce フォーラム「4090 dithering issues」: Odyssey G9 240 Hz で単色に横線、120 Hz では出ない（DSC 有効時の
@@ -157,7 +167,8 @@ RTX 3070＝10bit リンクでも 8bit 格子＋時空間ディザ）を受けて
 - https://github.com/Maassoft/ColorControl/issues/335 — A4000/3070 の消せない下位ディザ（DVI2PCIe 実測、2024-03）
 - https://forums.developer.nvidia.com/t/disable-dithering-on-rtx-a4000/279427 — A4000 時間ディザ自動有効・NVIDIA 回答
 - https://forums.blurbusters.com/viewtopic.php?t=12953 — 8→10bit ディザ、DSC 制約、NVIDIA サポート発言（伝聞）
-- https://ledstrain.org/u/ag3x — 4090/5080 不快・4070Ti/4060 良好（主観）
+- https://ledstrain.org/d/3924-i-bought-an-rtx-5080-and-got-headaches-solved — ag3x の全経過: 4090/5080 不快・4070Ti/4060 良好、AW2723DF（8bit＋FRC）→ 真 8bit XG27ACG で半減、GPU ディザ×FRC の干渉と本人が結論、真 8bit でも 4090 に残差（主観。サイトは通常の取得を拒否するためブラウザ相当 UA で取得）
+- https://www.displayninja.com/dell-alienware-aw2723df-review/ — AW2723DF: 8bit＋FRC、DP 1.4 ＋ DSC で 280 Hz 10bit
 - https://www.nvidia.com/en-us/geforce/forums/geforce-graphics-cards/5/510224/4090-dithering-issues/ — 4090 240Hz 横線（伝聞）
 - https://hub.displaycal.net/forums/topic/how-to-enable-dithering-on-nvidia-geforce-with-windows-os/ — DitherRegistryKey 値と既定条件（2019）
 - https://github.com/Maassoft/ColorControl/issues/83 — 自動読み出し値と実挙動の不一致

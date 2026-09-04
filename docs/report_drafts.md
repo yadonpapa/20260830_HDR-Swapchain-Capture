@@ -246,8 +246,7 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 ### 4.2 Qt バグ報告の日本語版
 
 ```text
-概要: D3D11 RHI: 拡大率 300% の HDR 画面で HDR スワップチェーン（scRGB/HDR10）が「未対応」と判定される
-      （QT_ENABLE_HIGHDPI_SCALING=0 のときだけ作成できる）
+概要: D3D11 RHI: 拡大率 300% の HDR 画面で scRGB/HDR10 スワップチェーンが無言で SDR にフォールバックする（QT_ENABLE_HIGHDPI_SCALING=0 で回避可）
 
 環境
 - Qt 6.11.0（PyQt6 6.11.0）、Windows 11 Pro 26200、D3D11 RHI バックエンド（既定）

@@ -165,6 +165,21 @@ So the window->screen HDR capability check for the D3D11 swapchain fails in at l
 fallback is silent (debug-level log only) while the app believes it is rendering HDR. A visible warning, or
 ideally a correct check (physical-coordinate screen lookup; enumerate outputs across adapters, or create
 the device on the adapter that owns the window's screen), would prevent silently wrong output.
+
+Root cause analysis (from reading the dev branch; the code is unchanged since 2024-11, so dev/6.12+
+should be equally affected - src/gui/rhi/qdxgihdrinfo.cpp):
+- Variant 2 (adapter): QD3D11SwapChain::isFormatSupported() and createOrResize() call
+  QDxgiHdrInfo(rhiD->activeAdapter).isHdrCapable(m_window). With an adapter set, QDxgiHdrInfo
+  enumerates only that adapter's outputs, so a window on a screen owned by a different adapter can
+  never match (its all-adapters path is only taken when no adapter is passed).
+- Variant 1 (high-DPI): the window-to-output mapping does
+      QRect wr = w->geometry();
+      wr = QRect(wr.topLeft() * w->devicePixelRatio(), wr.size() * w->devicePixelRatio());
+  i.e. it multiplies the window's position in Qt's global *logical* coordinate space by the
+  devicePixelRatio. In a mixed-DPI multi-monitor layout the logical origin of a screen is not its
+  physical origin divided by that screen's scale factor, so for a 300%-scaled secondary screen the
+  computed center lands outside the screen's DXGI desktop rect and no output matches. QWindow's
+  native (physical) geometry, or QPlatformScreen/MonitorFromWindow, would map correctly.
 Reproducer (PyQt6 test-pattern window with --mode scrgb|hdr10 and --screen), the DXGI output dump tool and the
 capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (tools/proto_hdr_view.py, tools/dxgi_outputs.cpp, docs/RESULTS.md §4).
 ```
@@ -292,6 +307,20 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 スケーリング／別アダプタ所属の画面）で独立に壊れており、いずれもフォールバックは無言（debug レベルのログのみ）で、
 アプリは HDR を描いているつもりのまま誤った出力になります。可視の警告か、正しい判定（物理座標での画面照合・
 アダプタ横断の出力列挙、またはウィンドウの画面を所有するアダプタでのデバイス作成）を希望します。
+
+原因箇所の分析（dev ブランチのソースを確認。2024-11 以降機能変更なし＝dev/6.12+ も同罪のはず。
+src/gui/rhi/qdxgihdrinfo.cpp）:
+- 変種 2（アダプタ）: QD3D11SwapChain::isFormatSupported() / createOrResize() は
+  QDxgiHdrInfo(rhiD->activeAdapter).isHdrCapable(m_window) と自分のアダプタを渡して構築する。
+  アダプタ指定ありの QDxgiHdrInfo は**そのアダプタの出力しか列挙しない**ため、別アダプタ所属の
+  画面上のウィンドウは決して一致しない（全アダプタ走査はアダプタ未指定時のみ）。
+- 変種 1（高 DPI）: 窓→出力の照合が
+      QRect wr = w->geometry();
+      wr = QRect(wr.topLeft() * w->devicePixelRatio(), wr.size() * w->devicePixelRatio());
+  ＝ Qt の**グローバル論理座標の位置に devicePixelRatio を単純乗算**している。混在 DPI の
+  マルチモニタでは画面の論理原点は「物理原点 ÷ その画面のスケール」にならないため、300% の
+  サブ画面では計算された中心が DXGI のデスクトップ矩形の外に落ちて一致しない。ネイティブ
+  （物理）ジオメトリか MonitorFromWindow を使えば正しく照合できる。
 再現コード（PyQt6 のテストパターン表示 --mode scrgb|hdr10 / --screen）、DXGI 出力ダンプツール、取り込みの証拠は
 https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています（tools/proto_hdr_view.py、tools/dxgi_outputs.cpp、docs/RESULTS.md §4）。
 ```

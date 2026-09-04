@@ -60,7 +60,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
-| `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering — with implications for the next measurements (EN summary + full JA notes) |
+| `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering, plus a fact‑check (§D) of generative‑AI answers claiming Radeon / exclusive fullscreen / madVR would give bit‑exact HDR10 under Independent Flip — with implications for the next measurements (EN summary + full JA notes) |
 
 ## Quick start
 
@@ -115,4 +115,4 @@ Ampere は比較対象にならない（コード値照合の計測にも不向�
 （`docs/PROCEDURE.md` §7）。詳細は `docs/RESULTS.md` §7・データは `data/osaka3070_*`。
 
 RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について
-公開情報を調べた結果（次に計測すべき対象の根拠）は `docs/RESEARCH_NOTES.md`。
+公開情報を調べた結果（次に計測すべき対象の根拠）と、「Radeon／排他的フルスクリーン／madVR なら Bit-Exact になる」という生成 AI 回答の検証（§D）は `docs/RESEARCH_NOTES.md`。

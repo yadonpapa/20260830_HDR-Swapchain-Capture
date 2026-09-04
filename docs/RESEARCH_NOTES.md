@@ -16,6 +16,7 @@ chosen deliberately. Everything below is desk research, not our own measurement;
 | Branch × generation matrix | Nobody has measured it. Observed differences track the GPU generation and the output settings (range, depth, format), not the branch. | none |
 | "Radeon has only one driver" | **Wrong, with a grain of truth.** AMD ships Adrenalin, PRO Edition and Cloud Edition; consumer RX cards may officially install PRO Edition. But AMD never gated features such as 10 bpc output behind a branch the way NVIDIA once gated 30‑bit OpenGL to Quadro (lifted in 2019). | vendor |
 | "Radeon reproduces gradients better than NVIDIA" | **Plausible for SDR 8‑bit desktop banding** (AMD dithers by default; NVIDIA on Windows does not for full‑range RGB), **unmeasured for HDR 10‑bit quantisation.** AMD's display core (shared Linux/Windows DC code) applies *static spatial* dithering even at 10 bpc output (`SPATIAL10`, `FRAME_RANDOM = 0`) and disables it only at 12 bpc — a third pattern (no frame‑to‑frame change, but 1‑px spatial flips) that nobody has captured. | hearsay + source code |
+| "Switch to Radeon (or use exclusive fullscreen / madVR passthrough) to get bit‑exact HDR10 under iFLIP" (two generative‑AI answers, fact‑checked in §D) | **Mechanism wrong, Radeon still unmeasured.** Independent Flip bypasses DWM by definition (Microsoft docs), and our composed‑vs‑iFlip control puts the RTX 50 defect in the direct scanout stage, not in DWM/ACM (ACM is an SDR‑display feature). Exclusive fullscreen uses the same scanout hardware; madVR "passthrough" only switches HDR metadata through private APIs. The suggested AMD registry keys (`PP_ThermalRegulatorOptions`, `TMDS_Dither`, `DP_Dither` = 0) do not exist; the real `*_DisableDither` = 1 values are legacy `atikmdag.sys` strings, and the documented control is the public ADL dither API (`ADL_DL_DISPLAY_DITHER_DISABLED`, exposed by ColorControl) or a 12 bpc link (DC default: no dither). | vendor docs + our measurement |
 
 ## Implications for the next measurements
 
@@ -31,6 +32,10 @@ chosen deliberately. Everything below is desk research, not our own measurement;
    registry path and an undocumented NvAPI (ColorControl / novideo_srgb); Ampere's low‑level dither survives NvAPI "Disabled"
    (ColorControl #335), matching our RTX 3070 capture. AMD: 24 dither modes in the public ADL API; the legacy `DisableDither`
    registry strings are absent from current drivers (effect unverified).
+5. **When Radeon is measured, include the dither controls in the matrix.** Capture at 10 bpc with ADL dither
+   DRIVER_DEFAULT and DISABLED, and at 12 bpc if the capture EDID allows it (DeckLink 8K Pro G2 advertises DC_36bit),
+   for both swapchain formats. The DC design predicts that FP16 carries the same OPP‑stage spatial dither as
+   R10G10B10A2, and that DWM composition does not remove it (§D‑4).
 
 The full research record (in Japanese, with all sources) follows.
 
@@ -56,6 +61,7 @@ RTX 3070＝10bit リンクでも 8bit 格子＋時空間ディザ）を受けて
 | 世代ごとのドライバ差 | ブランチ×世代の比較計測は存在しない。観測差は GPU 世代と出力設定に帰属するのが整合的 | 情報なし |
 | 「Radeon はドライバが 1 種類」 | **誤り（部分的に正しい）**。Adrenalin / PRO Edition / Cloud Edition の 3 系統。ただし NVIDIA のように「機能をブランチで解禁」する差は歴史的に無い | 公式 |
 | 「Radeon の方がグラデーション再現が良い」 | **SDR 8bit デスクトップのバンディングに限れば概ね支持**（AMD は既定ディザ ON、NVIDIA Windows は Full range で既定ディザ無し）。**HDR 10bit の量子化精度を計測した比較は存在しない**。AMD の 10bpc 出力は設計上「内部精度→10bit の静的空間ディザ」（Linux DC ソース）で、真 10bit コードの均一性は未計測 | 伝聞＋設計ソース |
+| 「Radeon に替えれば（または排他的フルスクリーン／madVR パススルーなら）iFLIP HDR10 で Bit-Exact になる」（生成 AI の回答 2 件・§D で検証） | **機序が誤り・Radeon は依然未計測**。Independent Flip は定義上 DWM を通らず（MS 文書）、本リポジトリの合成 vs iFLIP 対照は RTX 50 の欠陥を直接スキャンアウト段に置く。FSE も同じ表示エンジンを通る。madVR の passthrough はプライベート API による HDR メタデータ切替。提示された AMD レジストリ値（`PP_ThermalRegulatorOptions`・`TMDS_Dither`・`DP_Dither`=0）は実在せず、実在する `*_DisableDither`=1 は`atikmdag.sys` 世代の遺物。文書化された制御は公開 ADL ディザ API（DISABLED）か 12 bpc リンク | 公式文書＋本リポジトリ実測 |
 
 **計画への含意**
 
@@ -73,6 +79,9 @@ RTX 3070＝10bit リンクでも 8bit 格子＋時空間ディザ）を受けて
    非公開 NvAPI（ColorControl / novideo_srgb）のみ。Ampere の「消せない下位レベルディザ」は NvAPI Disabled でも残る
    （ColorControl #335）＝本リポジトリの 3070 実測と整合。AMD は ADL 公開 API にディザ 24 モードがあり、
    `DisableDither` レジストリは新ドライバで文字列が消えている（有効性未検証）。
+5. **Radeon を測るときはディザ制御を計測マトリクスに入れる。** 10 bpc で ADL ディザ DRIVER_DEFAULT / DISABLED の
+   両方、キャプチャ側 EDID が許せば 12 bpc（DeckLink 8K Pro G2 は DC_36bit を広告）でも撮り、FP16 と R10G10B10A2 の
+   両方を対象にする。DC の設計上、FP16 にも同じ OPP 段の空間ディザが乗り、DWM 合成でも消えないと予想される（§D-4）。
 
 ---
 
@@ -360,3 +369,85 @@ Windows 版での FRAME_RANDOM 既定値・RDNA3/4 の DisableDither レジス�
 - https://forums.tomshardware.com/threads/switched-a-amd-card-for-a-nvidia-card-and-now-only-got-8bit-dither-gradients.3628924/ — AMD→NVIDIA 乗換でのバンディング報告（2020）
 - https://lkml.iu.edu/1812.1/03111.html — amdgpu「max bpc」プロパティ（既定 8 bpc）
 - https://www.amd.com/en/resources/support-articles/release-notes/RN-RAD-WIN-24-4-1.html — Auto HDR 後の washed out 既知不具合
+
+---
+
+## §D. 「Radeon なら iFLIP HDR10 で Bit-Exact になるか」— 生成 AI（Gemini）回答の検証（2026-09-04）
+
+NVIDIA iFLIP の HDR10 が Bit-Exact でないことが確定した後、「Radeon ではどうか」を Gemini に尋ねた回答が 2 件ある
+（1 件目はリポジトリ提示前、2 件目は本リポジトリを提示して再検証させたもの）。どちらも一見もっともらしいが、
+機序の説明と具体的な回避策に誤りがあったので、主張ごとの判定と一次情報を記録する。凡例は §A〜§C と同じ。
+**[本実測]**＝本リポジトリの DeckLink 計測（RESULTS.md）。
+
+### D-1. 前提: 本リポジトリの実測が固定している事実
+
+- **[本実測]** RTX 5090 Laptop（Blackwell）: PresentMon で全 Present が `Hardware: Independent Flip` の状態で、
+  R10G10B10A2 に ≈16 コード周期の 2 コード飛び 49 箇所。**同じ窓を DWM 合成（`Composed: Flip`）に降格させると
+  周期飛びは全消滅**し、代わりに近黒（≤144）23 コードの欠落に置き換わる（PQ→FP16→PQ 往復）。FP16 scRGB は
+  iFLIP でも合成でもランプ行がビット一致で、丸め精度で正確（RESULTS.md §6）。
+- **[本実測]** RTX 3070（Ampere）: 全 716 Present が iFLIP の状態で、FP16 / R10G10B10A2 とも 8bit 格子＋
+  ランダム時空間ディザ。スワップチェーン形式に依存しない出力段の性質（RESULTS.md §7）。
+- したがって劣化は **GPU のスキャンアウト段（表示エンジン）に固有**で、DWM の処理ではない。合成経路は
+  「別の劣化」を持つ別経路であって、Bit-Exact な経路ではない。
+
+### D-2. 第 1 回答（リポジトリ提示前）の主張と判定
+
+| 主張 | 判定 | 根拠 |
+|---|---|---|
+| HDR 有効時は ACM（自動色管理）が背後で動き、iFLIP でも DWM が PQ を scRGB FP16 に再マップして再エンコードするので、GPU を問わず OS レベルで Bit-Exact でない | **誤り** | **[公式]** 「自動色管理」のトグルは **SDR ディスプレイ向け**機能で、MHC ICC プロファイルで provisioning された機種のみ対象（MS Learn「Use DirectX with Advanced Color」「ICC profile behavior with Advanced Color」）。HDR モードの色管理（DWM が各アプリを CCCS＝scRGB FP16 へ変換 → 表示カーネルが線形式へ変換）は**合成される内容にだけ**掛かる。**[公式]** flip model 文書: DirectFlip/Independent Flip は「デスクトップ合成を完全にバイパスしてアプリのフレームを直接画面へ送る。排他的フルスクリーンと同じ方式」。**[本実測]** 合成 vs iFLIP で劣化の形が変わる（D-1）。出典 [1] は SDR/ACM/8bit に関する MS Q&A の一般投稿で HDR も iFLIP も扱っていない |
+| Radeon の「10-Bit Pixel Format」は HDR と競合するので OFF にする必要があり、それは OS の色再計算を受け入れることを意味する | **前半は正しい・後半は飛躍** | **[公式]** AMD 22.7.1 リリースノート「10-Bit Pixel Format は HDR と非互換・HDR 表示では無効化推奨」（§C-2）。ただしこれは OpenGL の 10bit バッファ用設定で、OFF にしても iFLIP の直接スキャンアウトは変わらない |
+| 排他的フルスクリーン（FSE）なら DWM/ACM をバイパスしてフレームバッファの 10bit がそのまま出る | **誤り** | **[公式]** Windows 10 1803 以降の Fullscreen Optimizations は FSE の flip model アプリを「ボーダレス＋iFLIP」として動かす（DirectX Developer Blog）。**[公式]** iFLIP は「FSE と同じ効率で直接送出」（flip model 文書）。真の FSE でも画素は同じ表示エンジン（LUT・CSC・ディザ）を通り、表示エンジンを経ずに線へ出る経路は存在しない。**[本実測]** iFLIP＝既に DWM をバイパスした状態で劣化が出ている |
+| AMD ドライバは D3D11/12 の完全排他 FSE ＋ 10bit の瞬間だけ OS をバイパスするネイティブ HDR10 経路を通す（出典 [6]） | **出典の誤読** | [6] は Steam のゲームスレッドで、Doom9 の「AMD の**プライベート HDR 切替 API** は D3D11 全画面 10bit 再生中しか効かない」という書き込みの転載 **[伝聞]**。HDR モード切替（メタデータ送出）の話で、画素経路の話ではない |
+| madVR の HDR パススルーで OS の色管理バッファを素通りできる | **誤解** | **[伝聞・複数一致]** madVR の「passthrough」は NVIDIA/AMD のプライベート API で HDR インフォフレームを直接送り、Windows の HDR 切替を使わずに表示器を HDR にする機能（Windows 10 の HDR 対応以前の回避策。AVS Forum / Doom9）。画素は同じ GPU 表示パイプラインを通る |
+| 「Radeon でも iFLIP のままの Bit-Exact は不可能。NVIDIA の問題はおそらく DWM/MPO の仕様」 | **根拠なし・実測と矛盾** | **[本実測]** RTX 50 の FP16 scRGB は iFLIP で丸め精度まで正確かつ合成経路とビット一致。「OS が必ず崩す」なら scRGB も崩れるはず。**[実測なし]** Radeon の線上コードは誰も測っていない（§C-2）。**[公式・ソース]** DC の既定は 10 bpc で静的空間ディザ（§C-2）＝別種の非 Bit-Exact が予想される |
+
+出典の質: [1] MS Q&A 一般投稿、[2]〜[5] LTT / Reddit、[6] Steam スレッド。ベンダー文書・OS 文書の一次情報は含まれていない。
+
+### D-3. 第 2 回答（リポジトリ提示後）の主張と判定
+
+リポジトリの実測（RTX 50 の周期飛び・Ampere の 8bit 格子＋ディザ・FP16 が正確・合成で周期飛びが消える）の
+読み取りは正確。origin は公開リポジトリ `yadonpapa/20260830_HDR-Swapchain-Capture` で、実際に読めたと考えてよい。
+問題は **Gemini が独自に付け加えた部分**にある。
+
+| 主張 | 判定 | 根拠 |
+|---|---|---|
+| Radeon PRO 系の「AMD Radiance Display Engine」 | **ほぼ正しい（帰属が不正確）** | **[公式]** Radiance Display Engine は RDNA 3（RX 7900）で導入された表示エンジンの名称で 12 bpc・DP 2.1 対応。PRO 専用ではなく、RX 9070（RDNA 4）も同系統 |
+| 内部精度は 12bit 以上で、NVIDIA のような周期的 LUT バグは公開検証で報告なし | **正しいが「未計測」を「無い」に読み替えないこと** | **[公式]** DCN 文書: DPP で内部浮動小数点に変換し OPP まで保持（§C-2）。AMD の同種報告が無いのは事実だが、DeckLink 級の計測が存在しない |
+| Radeon は 10bpc でも空間ディザを強制し、フレーム間変動なしで隣接画素に数コードのパターンが出る | **本リポジトリ §C-2 の推定と一致（未実測）** | **[公式・ソース]** `resource_build_bit_depth_reduction_params`: 10bpc 出力で SPATIAL10・FRAME_RANDOM=0、12bpc で DISABLE。Windows 実測は無い。振幅は内部値→10bit の LSB なので ±1 コード程度が予想され「数コード」ではない。Gemini の「伝統的に知られる」は本リポジトリの推定の言い換えとみられる |
+| FP16 scRGB に一本化すれば Radeon でも最も正確 | **半分正しい** | RTX 50 では実測どおり。Radeon では DC のディザが OPP（パイプライン末尾）で stream 単位に掛かるため、**FP16 でも同じ空間ディザが乗る**設計。10bit 入力固有の LUT 経路を避ける効果はあり得る。iFLIP で「DWM が FP16 を扱う」という説明は D-2 と同じ誤り |
+| `PP_ThermalRegulatorOptions`・`TMDS_Dither`・`DP_Dither` を 0 にしてディザ回路を物理的に停止できる | **誤り（名前・極性とも）** | `PP_` 接頭辞は PowerPlay の電力/温度系（`PP_ThermalAutoThrottlingEnable` 等）でディザと無関係。**[伝聞・複数一致]** 実在する値は `DP_DisableDither` / `HDMI_DisableDither` / `TMDS_DisableDither` / `Embedded_DisableDither` を **1** にする（VPixx 文書、公開 .reg、HP Anyware）。**[伝聞]** ColorControl Issue #343: これらは `atikmdag.sys` 由来で「新しいドライバはその文字列を含まない」＝RDNA 世代（`amdkmdag.sys`）で効くかは未検証 |
+| Adrenalin/PRO の標準 UI にディザのオフスイッチが無いのでレジストリしかない | **前半は正しい・後半は誤り** | **[公式]** 公開 ADL API `ADL2_Display_DitherState_Set` に `ADL_DL_DISPLAY_DITHER_DISABLED`（0）を含む 24 モード（§C-2）。**[実装確認]** ColorControl の AMD サービス（`AmdService.cs` `SetDithering` → `ADLWrapper.SetDisplayDitherState`）がこの API を呼んでおり、GUI から設定できる |
+| DWM 合成（Composed: Flip）を介在させた方が線形性が担保されやすいというパラドックス | **不完全で誤解を招く** | **[本実測]** RTX 50 の合成経路は周期飛びが消える代わりに近黒 23 コードが欠落（D-1）。Bit-Exact ではなく別種の劣化。**[公式・ソース]** AMD ではディザが OPP で stream 単位に掛かるため、設計上は合成経路でも消えない（§C-5） |
+| Radeon 移行は検証価値が高い | **同意** | §C-6 / 統合要約 3 と一致。ただし「条件付きで可能」の条件が上記の効かない可能性が高いレジストリ値に依存しており、現時点の正直な答えは「未計測・機序は NVIDIA と別」 |
+
+### D-4. Radeon で Bit-Exact を狙うときの手順（公開情報に基づく優先順）
+
+1. **ADL でディザを DISABLED にする。** ColorControl の AMD プリセットで設定でき、自作不要。設定前後を DeckLink で撮り、
+   単一フレーム内の 1px 孤立反転が消えるかを見る。
+2. **12 bpc リンクで撮る。** DC の既定は 12bpc 出力でディザ無効。DeckLink 8K Pro G2 の HDMI 入力 EDID は DC_36bit を
+   広告している（RESULTS.md §7）ので、この機材なら試せる。UltraStudio 4K Mini は DC_30 のみ（RESULTS.md §6）で不可。
+3. **レジストリの `*_DisableDither=1` は最後に、効果を実測で確認する前提で。** 現行ドライバに文字列が無いという報告があり
+   期待値は低い。
+4. いずれも PresentMon で `Hardware: Independent Flip` を同時記録し、FP16 と R10G10B10A2 の両方を撮る。DC の設計上、
+   FP16 にも同じ OPP 段ディザが乗ると予想されるので、両形式の差は「10bit 入力固有の LUT 経路の有無」を切り分ける。
+
+### D-5. 出典
+
+- https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range — Advanced Color: HDR モードの CCCS（scRGB FP16）合成・2 段階色管理、SDR 向け自動色管理は provisioning 済み機種のみ（公式）
+- https://learn.microsoft.com/en-us/windows/win32/wcs/advanced-color-icc-profiles — ICC profile behavior with Advanced Color（公式）
+- https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/for-best-performance--use-dxgi-flip-model — DirectFlip / Independent Flip は「デスクトップ合成を完全にバイパス・FSE と同じ方式」（公式）
+- https://devblogs.microsoft.com/directx/demystifying-full-screen-optimizations/ — Fullscreen Optimizations: FSE をボーダレスで実行（公式ブログ）
+- https://learn.microsoft.com/en-us/surface/configure-sdr-and-hdr-display — Surface の SDR/HDR 計測設定（ACM は SDR モードの項目）（公式）
+- https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md — PresentMode の定義（Hardware: Independent Flip / Composed: Flip）
+- https://learn.microsoft.com/en-us/answers/questions/5757709/windows-11-not-rendering-10bit-color-unles-acm-is — Gemini 出典 [1]（MS Q&A 一般投稿。SDR/ACM/8bit の話）
+- https://steamcommunity.com/app/306760/discussions/1/1486613649677087480/?l=italian&ctp=2 — Gemini 出典 [6]（Steam スレッド。Doom9 の AMD プライベート HDR 切替 API の転載）
+- https://www.avsforum.com/threads/madvr-hdr-passthrough-isnt-working.2880609/ — madVR HDR passthrough＝プライベート API による HDR 切替（伝聞）
+- https://www.amd.com/en/resources/support-articles/release-notes/RN-RAD-WIN-22-7-1.html — 10-Bit Pixel Format と HDR 非互換（公式・§C-7 再掲）
+- https://gpuopen-librariesandsdks.github.io/adl/group__define__dither__states.html — ADL ディザ状態（DISABLED / DRIVER_DEFAULT / DITH10 / FM10 …）（公式）
+- https://gpuopen-librariesandsdks.github.io/adl/group__DISPLAYAPI.html — `ADL_Display_DitherState_Get/Set`（公式）
+- https://github.com/Maassoft/ColorControl/blob/master/ColorControl/Services/AMD/AmdService.cs — ColorControl の AMD ディザ設定実装（`ADL2_Display_DitherState_Set`）
+- https://github.com/Maassoft/ColorControl/issues/343 — 新ドライバに `*_DisableDither` 文字列が無い（伝聞）
+- https://docs.vpixx.com/vocal/diagnosing-and-disabling-dithering-in-the-graphics — `DP_DisableDither` / `TMDS_DisableDither` = 1（VPixx）
+- https://github.com/xiao-mantou/GamingTweaks-CHS/blob/master/.github/Registry%20tweaks/Dithering/AMD/Disable%20dithering.reg — 公開 .reg（DP/HDMI/TMDS/Embedded_DisableDither・`{4D36E968-…}\0000`）
+- https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/amd/display/dc/core/dc_resource.c — DC 既定ディザ（10bpc SPATIAL10・12bpc DISABLE）（公式・§C-7 再掲）
+- https://www.techpowerup.com/300632/amd-announces-the-usd-999-radeon-rx-7900-xtx-and-usd-899-rx-7900-xt-5nm-rdna3-displayport-2-1-fsr-3-0-fluidmotion — Radiance Display Engine（RDNA 3・12 bpc・DP 2.1）

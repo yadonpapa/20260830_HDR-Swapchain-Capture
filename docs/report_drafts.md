@@ -303,6 +303,35 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 - 再現者向け注意: 8K Pro G2＋NVIDIA CP 既定（GPU スケーリング）だと 4K デスクトップが 8K タイミングで出て 8bpc に
   降格。「実行デバイス: ディスプレイ」＋10 bpc 再適用で 4K 10bpc ネイティブ（PROCEDURE.md §7）。
 
+投稿文（§1c）の全文対訳:
+
+```text
+世代切り分け: 同じ計測を Ampere 世代の GPU（GeForce RTX 3070・デスクトップ・ドライバ 610.62）で実施しました。
+
+構成: RTX 3070 の HDMI → Blackmagic DeckLink 8K Pro G2 の HDMI 2.1 入力、2160p23.976 RGB 4:4:4 10 bpc フル、
+PQ InfoFrame。リンクが 10 bpc であることは 3 つの方法で確認しました（DisplayConfig の target モードが
+3840x2160 @ 23.976 で identity スケーリング、Windows Advanced Color の bitsPerColorChannel = 10、
+DeckLink の検出が RGB444 10-bit）。PresentMon は取り込みと同時に走らせ、両スワップチェーンとも
+716/716 の Present が "Hardware: Independent Flip" でした。
+
+結果 — Ampere は挙動が異なり、しかも FP16 scRGB と R10G10B10A2 で同一でした:
+- 伝送路上の全コードが 4 の倍数（10 bit リンク上の 8 bit 格子）。
+- 黒以外の全画素がフレーム間でちょうど ±4 だけ入れ替わる（ランダムな時空間ディザ。時間方向・
+  空間方向とも相関なし）。60 フレームの時間平均は、ランプ全域と全パッチで期待 10 bit PQ コードに
+  1 コード未満で一致しますが、単一フレームでは一致しません。
+
+したがって Ampere では 2 コード飛びをそもそも評価できません（コードを飛ばす元になる 10 bit の格子が
+存在しないため）。これにより、私が報告した不均一な量子化は RTX 50 系の真 10 bit 直接スキャンアウト経路に
+絞られます。Ampere は別種の無関係な挙動（8 bit 格子＋ディザ）を示し、それは scRGB と HDR10 に等しく
+影響します。データ（60 フレームの画素別 min/max/mean 付きランプ行、パッチ表、要約）は同じリポジトリの
+data/osaka3070_* にあります。
+
+DeckLink 8K Pro G2 で再現する方への実務的な注意: NVIDIA コントロールパネル既定（GPU スケーリング）では
+4K デスクトップが 7680x4320 のタイミングで出力され、リンクが 8 bpc に落ちます。4K 10 bpc のネイティブ
+タイミングを得るには「スケーリングを実行するデバイス: ディスプレイ」と 10 bpc の再適用が必要です
+（PROCEDURE.md §7）。
+```
+
 ### 4.2 Qt バグ報告の日本語版
 
 ```text

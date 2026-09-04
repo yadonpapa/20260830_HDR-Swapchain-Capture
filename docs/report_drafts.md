@@ -114,8 +114,7 @@ same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (da
   QQuickWindow ＋ `QSG_RHI_HDR=scrgb` の最小例に置き換える。
 
 ```text
-Summary: D3D11 RHI: HDR swapchain (scRGB/HDR10) reported unsupported on an HDR screen with 300% scaling
-         unless QT_ENABLE_HIGHDPI_SCALING=0
+Summary: D3D11 RHI: scRGB/HDR10 swapchain silently falls back to SDR on an HDR screen with 300% display scaling (QT_ENABLE_HIGHDPI_SCALING=0 avoids it)
 
 Environment
 - Qt 6.11.0 (PyQt6 6.11.0), Windows 11 Pro 26200, D3D11 RHI backend (default)
@@ -143,13 +142,29 @@ Expected
 
 What does / does not help
 - QT_ENABLE_HIGHDPI_SCALING=0 -> the scRGB/HDR10 swapchain is created and works correctly.
-- QT_D3D_ADAPTER_INDEX (0 = the adapter owning DISPLAY6, or others): no effect.
+- QT_D3D_ADAPTER_INDEX (0 = the adapter owning DISPLAY6, or others): no effect for THIS variant (see below
+  for a second variant where it is the fix).
 - Creating the native window first (QWindow::create()), showing normal then fullscreen, positioning at the
   screen centre, or moving the HWND with SetWindowPos to the monitor's physical rect before show: no effect.
 - Same code on the laptop panel (HDR, small scale factor) works with high-DPI scaling enabled.
 
-So the HDR capability check in the D3D11 swapchain (isFormatSupported / output lookup for the window)
-seems to break under high-DPI scaling of the target screen, and the fallback is silent (debug-level log only).
+Second, independent way the same check fails (hybrid-GPU laptop; measured on another unit, driver 610.62)
+- Topology: internal panel driven by the Intel iGPU (DXGI adapter 0), external HDMI screen wired directly
+  to the NVIDIA dGPU (adapter 1) - the standard wiring on gaming laptops.
+- With the default adapter, requesting scRGB/HDR10 on the HDMI screen produces the exact same debug log and
+  silent SDR fallback, regardless of the scale factor (reproduces at 150%, and QT_ENABLE_HIGHDPI_SCALING=0
+  does not help here). The HDR capability check appears to search for the window's screen only among the
+  outputs of the adapter the device was created on, so a screen attached to a different adapter is always
+  "unsupported". DXGI itself reports that output as ColorSpace = 12 (PQ/2020), BitsPerColor = 10.
+- Workaround for this variant: QT_D3D_ADAPTER_INDEX=<index of the adapter that owns the target screen>
+  (read per QRhi creation, so it can even be set per window right before creating it) -> the HDR swapchain
+  is created and reports the correct HDR output info (maxLuminance etc.).
+
+So the window->screen HDR capability check for the D3D11 swapchain fails in at least two independent ways
+(high-DPI scaling of the target screen; screen owned by a different adapter), and in both cases the
+fallback is silent (debug-level log only) while the app believes it is rendering HDR. A visible warning, or
+ideally a correct check (physical-coordinate screen lookup; enumerate outputs across adapters, or create
+the device on the adapter that owns the window's screen), would prevent silently wrong output.
 Reproducer (PyQt6 test-pattern window with --mode scrgb|hdr10 and --screen), the DXGI output dump tool and the
 capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (tools/proto_hdr_view.py, tools/dxgi_outputs.cpp, docs/RESULTS.md §4).
 ```
@@ -259,13 +274,25 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 
 効いたもの／効かなかったもの
 - QT_ENABLE_HIGHDPI_SCALING=0 → scRGB/HDR10 スワップチェーンが作成され正しく動作する。
-- QT_D3D_ADAPTER_INDEX（DISPLAY6 を持つアダプタ 0、その他）: 効果なし。
+- QT_D3D_ADAPTER_INDEX（DISPLAY6 を持つアダプタ 0、その他）: この変種には効果なし（下の第 2 変種では回避策になる）。
 - ネイティブウィンドウの先行生成（QWindow::create()）、通常表示→全画面、画面中央への配置、
   表示前に SetWindowPos でモニタの物理矩形へ HWND を移動: いずれも効果なし。
 - 同じコードはノート内蔵パネル（HDR・拡大率小）では高 DPI スケーリング有効のまま動作する。
 
-したがって D3D11 スワップチェーンの HDR 可否判定（isFormatSupported／ウィンドウに対する出力の照合）が対象画面の高 DPI
-スケーリング下で壊れており、しかもフォールバックは無言（debug レベルのログのみ）です。
+同じ判定が独立に壊れる第 2 変種（ハイブリッド GPU ノート・別個体・ドライバ 610.62 で実測）
+- 構成: 内蔵パネル＝Intel iGPU（DXGI アダプタ 0）・HDMI 画面＝NVIDIA dGPU 直結（アダプタ 1）
+  ＝ゲーミングノートの標準配線。
+- 既定アダプタのまま HDMI 画面へ scRGB/HDR10 を要求すると、拡大率と無関係に（150% でも・
+  QT_ENABLE_HIGHDPI_SCALING=0 でも）同じログで無言 SDR 降格。HDR 可否判定がデバイス作成先アダプタの
+  出力一覧の中でしかウィンドウの画面を探さないため、別アダプタ所属の画面は常に「非対応」になる。
+  DXGI 自体は当該出力を ColorSpace=12（PQ/2020）・10bit と正しく報告している。
+- この変種の回避策: QT_D3D_ADAPTER_INDEX=<対象画面を所有するアダプタ>（QRhi 生成のたびに読まれるので
+  ウィンドウ生成直前の設定で per-window に効く）→ HDR スワップチェーン成立・HDR output info も正しい。
+
+したがって D3D11 スワップチェーンの「ウィンドウ→画面」HDR 可否判定は少なくとも 2 通り（対象画面の高 DPI
+スケーリング／別アダプタ所属の画面）で独立に壊れており、いずれもフォールバックは無言（debug レベルのログのみ）で、
+アプリは HDR を描いているつもりのまま誤った出力になります。可視の警告か、正しい判定（物理座標での画面照合・
+アダプタ横断の出力列挙、またはウィンドウの画面を所有するアダプタでのデバイス作成）を希望します。
 再現コード（PyQt6 のテストパターン表示 --mode scrgb|hdr10 / --screen）、DXGI 出力ダンプツール、取り込みの証拠は
 https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています（tools/proto_hdr_view.py、tools/dxgi_outputs.cpp、docs/RESULTS.md §4）。
 ```

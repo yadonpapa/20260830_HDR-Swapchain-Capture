@@ -1,0 +1,193 @@
+{
+  "environment": {
+    "date": "2026-09-04",
+    "gpu": "NVIDIA GeForce RTX 3070 (Ampere, desktop, single GPU) - generation control for the RTX 5090 Laptop results",
+    "driver": "610.62 (same driver package as the 2026-09-04 RTX 5090 Laptop re-measurement)",
+    "os": "Windows 11 Pro 26200",
+    "capture": "Blackmagic DeckLink 8K Pro G2 (PCIe) HDMI 2.1 input, r210 - no HDFury; the card's HDMI-input EDID advertises PQ, BT.2020, DC_30/36bit, max TMDS 600 MHz, FRL",
+    "signal": "3840x2160 @ 23.976 Hz RGB 4:4:4 10 bpc full (DisplayConfig: active 3840x2160 total 5500x2250 296.7 MHz, scaling IDENTITY; Windows ACI2 bitsPerColorChannel=10), HDR InfoFrame eotf=PQ",
+    "nvcp_note": "NVIDIA Control Panel 'Adjust desktop size and position' had to be set to No scaling + 'Perform scaling on: Display'; with the default (GPU scaling) the 4K desktop was output as a 7680x4320 timing (stretched or centered) and the link dropped to 8 bpc. 10 bpc had to be re-applied afterwards.",
+    "path_verification": "PresentMon 2.5.1 recorded concurrently with every capture (30 s window); pattern window presented continuously (proto_hdr_view --present-loop --foreground)"
+  },
+  "captures": {
+    "osaka3070_scrgb": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "first_frame_codes_multiple_of_4_fraction": 1.0,
+      "first_frame_unique_codes": 213,
+      "ramp_row_pixels_varying_between_frames": 3713,
+      "ramp_row_span_values": [
+        0,
+        4
+      ],
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.7354,
+      "whole_frame_span_histogram": {
+        "0": 2194415,
+        "4": 6099985
+      },
+      "ramp_row_step_width_histogram_single_frame": {
+        "1": 609,
+        "2": 258,
+        "3": 108,
+        "4": 51,
+        "5": 44,
+        "6": 24,
+        "7": 19,
+        "8": 35,
+        "9": 34,
+        "10": 21,
+        "11": 18,
+        "12": 11,
+        "13": 13,
+        "14": 6,
+        "15": 8,
+        "16": 2,
+        "17": 5,
+        "19": 2,
+        "21": 1
+      },
+      "ramp_row_adjacent_diff_values_single_frame": [
+        -4,
+        0,
+        4
+      ],
+      "ramp_row_isolated_1px_flips_single_frame": 611,
+      "ramp_row_time_mean_minus_expected_pq_code": {
+        "mean": 0.342,
+        "std": 0.328,
+        "max_abs": 1.386,
+        "pixels_abs_gt_1_5": 0
+      },
+      "ramp_band16_time_mean_minus_expected_pq_code": {
+        "note": "mean over 16 ROI rows x 60 frames per x (960 samples) - the numbers quoted in RESULTS.md section 7",
+        "mean": 0.347,
+        "std": 0.26,
+        "max_abs": 0.899,
+        "pixels_abs_gt_1_5": 0
+      },
+      "presentmon": {
+        "present_mode": "Hardware: Independent Flip",
+        "presents": 716,
+        "window_s": 30
+      },
+      "example_pixel_x3000": {
+        "values_and_counts": {
+          "660": 26,
+          "664": 34
+        },
+        "autocorrelation_lag1_4": [
+          0.037,
+          0.016,
+          0.034,
+          0.166
+        ],
+        "same_phase_fraction_with_right_neighbour": 0.517,
+        "same_phase_fraction_with_row_below": 0.483
+      }
+    },
+    "osaka3070_hdr10": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1700,
+        3840,
+        16
+      ],
+      "ramp_row_in_roi": 8,
+      "first_frame_codes_multiple_of_4_fraction": 0.9999,
+      "first_frame_unique_codes": 257,
+      "ramp_row_pixels_varying_between_frames": 3683,
+      "ramp_row_span_values": [
+        0,
+        4
+      ],
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.7349,
+      "whole_frame_span_histogram": {
+        "0": 2199163,
+        "3": 536,
+        "4": 6094701
+      },
+      "ramp_row_step_width_histogram_single_frame": {
+        "1": 642,
+        "2": 246,
+        "3": 120,
+        "4": 69,
+        "5": 52,
+        "6": 28,
+        "7": 49,
+        "8": 26,
+        "9": 25,
+        "10": 17,
+        "11": 22,
+        "12": 14,
+        "13": 12,
+        "14": 5,
+        "15": 2,
+        "16": 1
+      },
+      "ramp_row_adjacent_diff_values_single_frame": [
+        -4,
+        0,
+        4,
+        8
+      ],
+      "ramp_row_isolated_1px_flips_single_frame": 643,
+      "ramp_row_time_mean_minus_expected_pq_code": {
+        "mean": 0.327,
+        "std": 0.43,
+        "max_abs": 1.603,
+        "pixels_abs_gt_1_5": 4
+      },
+      "ramp_band16_time_mean_minus_expected_pq_code": {
+        "note": "mean over 16 ROI rows x 60 frames per x (960 samples) - the numbers quoted in RESULTS.md section 7",
+        "mean": 0.333,
+        "std": 0.377,
+        "max_abs": 1.393,
+        "pixels_abs_gt_1_5": 0
+      },
+      "presentmon": {
+        "present_mode": "Hardware: Independent Flip",
+        "presents": 716,
+        "window_s": 30
+      },
+      "example_pixel_x3000": {
+        "values_and_counts": {
+          "660": 26,
+          "664": 34
+        },
+        "autocorrelation_lag1_4": [
+          -0.031,
+          -0.084,
+          0.075,
+          -0.052
+        ],
+        "same_phase_fraction_with_right_neighbour": 0.483,
+        "same_phase_fraction_with_row_below": 0.517
+      }
+    }
+  },
+  "notes": [
+    "Both swapchains (FP16 scRGB and R10G10B10A2 HDR10) give the same picture on the wire: every non-black code is a multiple of 4 (an 8-bit lattice on a 10-bit link) and every non-black pixel toggles by exactly +-4 between frames (random spatio-temporal dither).",
+    "The 60-frame time average reproduces the expected 10-bit PQ code to within +0.35 +-0.3 codes (max |err| 0.9 scRGB / 1.4 HDR10) over the whole ramp, so the dither carries the missing 2 bits; a single frame does not.",
+    "The dither is uncorrelated in time (autocorrelation ~0) and between neighbouring pixels (~50 % same phase), and it appears in a single frame as 1-px isolated flips (~600 on the ramp row).",
+    "Consequence for the RTX 5090 (Blackwell) finding: the 2-code jumps cannot be evaluated on Ampere because Ampere never emits a 10-bit lattice; the uneven 10-bit quantisation of the R10G10B10A2 fullscreen path is specific to the true-10-bit direct scanout of the RTX 50 series. Ampere shows a different, unrelated degradation (8-bit lattice + dither) that affects scRGB and HDR10 alike.",
+    "Not tested: Windows HDR off (SDR 10 bpc), NVCP 'default colour settings', YCbCr 4:2:2 12-bit, other Ampere drivers, RTX PRO 6000 Blackwell (desktop Blackwell) - next generation control."
+  ],
+  "edid_hdmi_input_8k_pro_g2": {
+    "preferred_timing": "1920x1200 (NVCP shows 'native 1920x1200')",
+    "vics_include": "8K VIC 194-199, 2160p 24/25/30/50/60/100/120, 4096x2160",
+    "hdmi_vsdb": "DC_30bit, DC_36bit, DC_Y444, Max_TMDS_Clock 300 MHz",
+    "hf_vsdb": "Max_TMDS_Character_Rate 600 MHz, SCDC, FRL",
+    "colorimetry": "BT2020RGB, BT2020YCC",
+    "hdr_static_metadata": "EOTF SDR / traditional HDR / SMPTE ST 2084 (no HLG), SM type 1",
+    "y420": "8K 48/50/60 only"
+  }
+}

@@ -27,6 +27,16 @@ same laptop model, a **different capture device** (UltraStudio 4K Mini, no HDFur
 DWM's PQ→FP16→PQ round trip) while the scRGB ramp stays **bit‑identical** — the uneven quantisation is
 specific to the direct scanout path of the R10G10B10A2 fullscreen swapchain.
 
+**Generation control 2026‑09‑04** (`docs/RESULTS.md` §7, `data/osaka3070_*`): the same measurement on an
+**RTX 3070 (Ampere, desktop)** with a DeckLink 8K Pro G2 HDMI 2.1 input, 716/716 presents Independent Flip.
+Ampere behaves differently — and identically for both swapchains: **every code on the 10‑bit link is a
+multiple of 4 (an 8‑bit lattice) and every non‑black pixel toggles by ±4 between frames** (random
+spatio‑temporal dither; the 60‑frame average matches the expected 10‑bit PQ code within one code). So the
+uneven 10‑bit quantisation above is specific to the **true‑10‑bit direct scanout of the RTX 50 series**; Ampere
+is not a comparable reference (and unsuitable for code‑level capture work). Getting a native 4K 10 bpc timing
+out of a GeForce into the 8K Pro G2 needed NVIDIA CP *No scaling + Perform scaling on: Display* and a
+re‑applied 10 bpc — see `docs/PROCEDURE.md` §7.
+
 Related threads: NVIDIA Developer Forums
 [346429](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429) /
 [343119](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/343119);
@@ -37,14 +47,14 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 
 | Path | Purpose |
 |---|---|
-| `tools/proto_hdr_view.py` | Fullscreen Qt Quick test‑pattern window (PQ‑linear ramp 0→2000 nit + flat patches). `--mode scrgb\|hdr10\|srgb`, `--screen N`, `--list`, `--present-loop` (keep presenting every frame so PresentMon can log the presentation path) |
+| `tools/proto_hdr_view.py` | Fullscreen Qt Quick test‑pattern window (PQ‑linear ramp 0→2000 nit + flat patches). `--mode scrgb\|hdr10\|srgb`, `--screen N`, `--list`, `--present-loop` (keep presenting every frame so PresentMon can log the presentation path), `--foreground` (bring the window to the front when launched from a script) |
 | `tools/dither_capture.py` | Grab N consecutive frames from a DeckLink HDMI input as 10‑bit RGB (`r210`), per‑pixel min/max/mean, ROI time series → `.npz` |
 | `tools/dither_analyze.py` | Step‑width / monotonicity / temporal statistics of the ramp row |
 | `tools/make_ramp_y4m.py` | Synthetic 10‑bit limited‑range YCbCr ramp video (replaces the private test clip) |
 | `tools/dxgi_outputs.cpp` | Dump DXGI adapters/outputs with `ColorSpace`, bits, luminance — proves what Windows thinks the output is |
 | `tools/hdr_display.py`, `tools/pq.py` | Windows Advanced‑Color probe (ctypes) and PQ/sRGB curves |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`) |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 
@@ -91,3 +101,11 @@ HDR スワップチェーンを無言で SDR に落とす問題（`QT_ENABLE_HIG
 対照計測（DWM 合成・Composed: Flip 確認付き）では周期飛びが**全消滅**（近黒 23 コードの欠落に置換）・
 scRGB は**完全ビット一致**＝不均一は R10G10B10A2 全画面の直接スキャンアウト経路に固有。
 詳細は `docs/RESULTS.md` §6・データは `data/m25_*`。
+
+**世代切り分け（2026‑09‑04）**: 同じ計測を **RTX 3070（Ampere・デスクトップ）**＋DeckLink 8K Pro G2 の
+HDMI 2.1 入力で実施（716/716 Present が Independent Flip）。Ampere は両スワップチェーンとも **10bit リンク上の
+全コードが 4 の倍数（8bit 格子）で、黒以外の全画素が毎フレーム ±4 で揺れる**（ランダム時空間ディザ。60 フレーム
+平均は期待 10bit PQ コードに ±1 未満で一致）。上記の不均一量子化は **RTX 50 系の真 10bit 直接出力に固有**で、
+Ampere は比較対象にならない（コード値照合の計測にも不向き）。GeForce → 8K Pro G2 で 4K 10bpc のネイティブ
+タイミングを出すには NVIDIA CP の「スケーリングなし＋実行デバイス＝ディスプレイ」と 10 bpc の再適用が必要
+（`docs/PROCEDURE.md` §7）。詳細は `docs/RESULTS.md` §7・データは `data/osaka3070_*`。

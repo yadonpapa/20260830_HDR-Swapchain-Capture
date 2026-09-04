@@ -134,6 +134,66 @@ fullscreen window (still Independent Flip); occlusion by a window on the *same* 
 
 ---
 
+## 7. Generation control (2026‑09‑04): RTX 3070 (Ampere) puts an 8‑bit lattice + spatio‑temporal dither on a 10‑bit link
+
+To find out whether the R10G10B10A2 finding is a Blackwell (RTX 50) property or an NVIDIA‑wide one, the same
+measurement was run on an **Ampere desktop GPU** (`data/osaka3070_*`, `data/osaka3070_summary.json`).
+
+### Environment
+
+* NVIDIA GeForce RTX 3070 (desktop, single GPU), driver **610.62** (same package as §6)
+* Capture: **Blackmagic DeckLink 8K Pro G2** (PCIe) **HDMI 2.1 input**, r210 — no HDFury; the card's HDMI‑input
+  EDID advertises PQ, BT.2020, DC_30/36bit, max TMDS 600 MHz and FRL (see §7 of PROCEDURE.md for the
+  GeForce scaling pitfalls this EDID triggers)
+* Signal verified three ways before capturing: DisplayConfig target mode 3840×2160 total 5500×2250 @ 23.976 Hz
+  (296.7 MHz, scaling IDENTITY), Windows Advanced Color `bitsPerColorChannel = 10`, DeckLink detection
+  `2160p23.98 RGB444 10bit eotf=PQ`
+* PresentMon concurrent with every capture (30 s window): **716 / 716 presents `Hardware: Independent Flip`**
+  for both swapchains (`--present-loop`, window brought to the front with `--foreground`)
+
+### Results — the two swapchains behave identically, and differently from Blackwell
+
+| | FP16 scRGB | R10G10B10A2 HDR10 |
+|---|---|---|
+| Codes in a single frame | **every pixel a multiple of 4** (213 distinct values) | 99.99 % multiples of 4 (257) |
+| Frame‑to‑frame | **every non‑black pixel toggles by exactly ±4** (73.5 % of all channel samples; span 4 only) | same (span 4, a few 3) |
+| Time average (60 frames × 16 ramp rows) − expected PQ code, 3840‑px ramp | mean +0.35, σ 0.26, max 0.90, no pixel > 1.5 | mean +0.33, σ 0.38, max 1.39, no pixel > 1.5 |
+| Flat patches 2 … 2000 nit, time average − expected | +0.2 … +0.7 | −0.1 … +1.2 |
+| Ramp step widths in a single frame | 1 … 20 px, ~620 isolated 1‑px flips (spatial dither) | same (~630) |
+| Temporal autocorrelation lag 1–4 / same phase as neighbour | ≈ 0 / 48–52 % | same |
+
+Interpretation: on Ampere the scanout stage **encodes on an 8‑bit lattice even though the link is 10 bpc**, and
+carries the two missing bits as random spatio‑temporal dither — the time average converges on the correct
+10‑bit PQ code to well within one code, a single frame does not. It does not depend on the swapchain format
+(FP16 or R10G10B10A2), so it is an output‑stage property, unrelated to DWM (Independent Flip throughout).
+
+Consequences:
+
+* **The 2‑code jumps of §1/§6 cannot be evaluated on Ampere** — it never emits a 10‑bit lattice. The uneven
+  10‑bit quantisation of the R10G10B10A2 fullscreen path is therefore specific to the **true 10‑bit direct
+  scanout of the RTX 50 series (Blackwell)**; Ampere shows a different, unrelated degradation that affects
+  scRGB and HDR10 alike. The scope of the NVIDIA report is "RTX 50 series", with Ampere noted as
+  not comparable.
+* For **code‑level measurement work** (capturing what an app puts on the wire) an Ampere GPU is unsuitable
+  unless the values are time‑averaged; for visual checks on a reference monitor the dither is harmless.
+* Not tested: Windows HDR off (SDR 10 bpc), NVCP "default colour settings", YCbCr 4:2:2 12‑bit, other Ampere
+  drivers. Next control: RTX PRO 6000 Blackwell (desktop Blackwell) — does the ≈16‑code periodic pattern
+  reproduce there?
+
+### 日本語（世代切り分け 2026‑09‑04）
+
+* RTX 5090（Blackwell）の結果が世代固有か NVIDIA 全般かを見るため、**RTX 3070（Ampere・デスクトップ）**＋
+  DeckLink 8K Pro G2 の HDMI 2.1 入力で同計測（ドライバ 610.62・全 716 Present が Independent Flip・
+  DisplayConfig / Windows ACI2 / DeckLink 検出の 3 点で 2160p23.976 RGB 10bpc を確認）。
+* 結果: scRGB / HDR10 とも**全コードが 4 の倍数（8bit 格子）**で、黒以外の全画素が毎フレーム ±4 で揺れる
+  **ランダム時空間ディザ**。60 フレームの時間平均は期待 10bit PQ コードに +0.35 ±0.3（最大 0.9 / 1.4）で一致
+  ＝10bit 相当の情報はディザで載っている。前後フレーム・隣接画素と無相関。
+* 含意: Ampere は 10bit の格子を出さないので **2 コード飛びは評価不能＝現象は RTX 50 系の真 10bit 直接出力に
+  固有**。報告の適用範囲は「RTX 50 系」、Ampere は「比較対象にならない（別種の劣化）」と付記。コード値照合の
+  計測用途には Ampere は不向き（時間平均なら ±1）。次の切り分けは RTX PRO 6000 Blackwell。
+
+---
+
 ## 日本語要約
 
 * 環境: RTX 5090 Laptop（Studio 596.36）→ Vertex → PA32UCDM ＋ DeckLink 4K Extreme 12G。2160p23.98 RGB 4:4:4 10bit PQ。

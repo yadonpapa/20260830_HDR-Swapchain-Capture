@@ -87,6 +87,33 @@ changes the numbers (see RESULTS.md §6). Record it instead of assuming it:
    changing the colour format in NVIDIA CP can silently reset the refresh rate back to 60 Hz (re‑check
    that the mode is still 4K ≤ 30 Hz RGB 10 bpc, e.g. with a probe capture).
 
+### 7. DeckLink 8K Pro G2 HDMI input + GeForce: get a *native* 4K 10 bpc timing (added 2026‑09‑04)
+
+The 8K Pro G2's HDMI‑input EDID has a 1920×1200 preferred timing plus 8K VICs (194–199). With NVIDIA's defaults
+this combination silently gives you the wrong signal:
+
+1. **GPU scaling to 8K.** NVIDIA CP → *Adjust desktop size and position* defaults to *Full‑screen* scaling
+   *performed on the GPU*: the 3840×2160 desktop is output as a **7680×4320 @ 23.976 timing** (DisplayConfig:
+   source 3840×2160, target 7680×4320, scaling STRETCHED). The DeckLink detects `4320p23.98`, the frame is
+   133 MB (hence the 160 MB capture buffer), the picture went through the GPU scaler, and the link **drops to
+   8 bpc** (8K24 RGB 10‑bit does not fit). *No scaling* alone only centres the 4K picture in the 8K timing
+   (CENTERED, still 8 bpc). Set **"Perform scaling on: Display"** — then the GPU sends 3840×2160 total
+   5500×2250 @ 23.976 (296.7 MHz) directly. `SetDisplayConfig` from Windows (IDENTITY, explicit target mode)
+   is overridden by the NVIDIA driver and does not help.
+2. **Re‑apply the colour depth.** After the scaling change the panel still showed 10 bpc but the link was
+   8 bpc (Windows Advanced Color `bitsPerColorChannel = 8`, DeckLink `RGB444+8bit`). Select 8 bpc → Apply →
+   10 bpc → Apply. Verify with *both* the Windows probe (`tools/hdr_display.py`) and the DeckLink detection
+   flags in the capture log — codes that are all multiples of 4 mean an 8‑bit link (or, on Ampere, the
+   GPU's own 8‑bit lattice, see RESULTS.md §7).
+3. The refresh‑rate box on the *Adjust desktop size and position* page is a **preview** control (it may show
+   120 Hz / 30 Hz); the applied mode is on *Change resolution* and in DisplayConfig.
+4. **Secondary taskbar.** If you operate other windows (e.g. NVIDIA CP) during the run, the taskbar on the
+   captured screen stays on top and every present becomes `Composed: Flip`; `--foreground`
+   (`SwitchToThisWindow`) cannot win against the foreground lock. Hands off during the capture.
+5. EDID facts (8K Pro G2 HDMI in): HDMI VSDB DC_30/36bit + DC_Y444, max TMDS 300 MHz; HF‑VSDB max TMDS 600 MHz,
+   SCDC, FRL; colorimetry BT2020 RGB/YCC; HDR static metadata SDR/HDR/PQ (no HLG); 4:2:0 only for 8K 48/50/60.
+   4K24 RGB 10‑bit (TMDS 371 MHz) is within the sink's capabilities — the 8 bpc above is the driver's choice.
+
 ---
 
 ## 日本語
@@ -147,3 +174,29 @@ GPU の HDMI → HDFury Vertex（EDID はモニタのコピー・パススルー
 4. HDMI 入力の EDID が HDR を宣言するキャプチャ機（例: UltraStudio 4K Mini＝HDR10＋RGB 10bit）なら
    HDFury は不要。ただし複製表示中は Windows が HDR を無効化（拡張にする）・NVIDIA CP の色形式変更で
    リフレッシュが 60 Hz に戻ることがある（probe 取り込みで 4K ≤30 Hz RGB 10bpc を再確認）。
+
+### 7. DeckLink 8K Pro G2 の HDMI 入力＋GeForce で 4K 10bpc の**ネイティブ**タイミングを出す（2026‑09‑04 追加）
+
+8K Pro G2 の HDMI 入力 EDID は優先タイミングが 1920×1200 で、VIC に 8K（194〜199）を持つ。NVIDIA 既定のままだと
+無言で別の信号になる:
+
+1. **GPU スケーリングで 8K に拡大される。** NVIDIA CP「デスクトップのサイズと位置の調整」は既定で
+   「全画面表示」＋「実行デバイス: GPU」＝ 3840×2160 のデスクトップが **7680×4320 @ 23.976 のタイミング**で出る
+   （DisplayConfig: source 3840×2160・target 7680×4320・STRETCHED）。DeckLink は `4320p23.98` で検出し
+   （フレーム 133 MB → 取り込みバッファを 160 MB に拡大）、絵は GPU スケーラ経由、リンクは **8bpc に降格**
+   （8K24 RGB 10bit は通らない）。「スケーリングなし」だけでは 8K タイミングの中央に 4K を置くだけ（CENTERED・
+   8bpc のまま）。**「スケーリングを実行するデバイス: ディスプレイ」**にすると 3840×2160 total 5500×2250 @ 23.976
+   （296.7 MHz）が直接出る。Windows 側の SetDisplayConfig（IDENTITY・target モード明示）は NVIDIA ドライバに
+   上書きされて効かない。
+2. **色深度を再適用する。** スケーリング変更後、表示は 10 bpc でも実リンクは 8bpc だった（Windows ACI2 bits/ch=8・
+   DeckLink `RGB444+8bit`）。8 bpc → 適用 → 10 bpc → 適用。確認は Windows 側プローブ（`tools/hdr_display.py`）と
+   取り込みログの DeckLink 検出フラグの**両方**で行う。コードが全て 4 の倍数なら 8bit リンク（または Ampere の
+   GPU 自身の 8bit 格子＝RESULTS.md §7）。
+3. 「デスクトップのサイズと位置の調整」ページのリフレッシュレート欄は**プレビュー用**（120 Hz / 30 Hz 等と出る）。
+   適用値は「解像度の変更」と DisplayConfig で見る。
+4. **セカンダリタスクバー。** 計測中に他のウィンドウ（NVIDIA CP 等）を操作すると、取り込み画面のタスクバーが前面に
+   残り全 Present が `Composed: Flip` になる。`--foreground`（SwitchToThisWindow）はフォアグラウンドロックに勝てない。
+   取り込み中は無操作。
+5. EDID 要旨（8K Pro G2 HDMI 入力）: HDMI VSDB DC_30/36bit＋DC_Y444・Max TMDS 300 MHz、HF‑VSDB Max TMDS 600 MHz・
+   SCDC・FRL、Colorimetry BT2020 RGB/YCC、HDR SM SDR/HDR/PQ（HLG 無し）、4:2:0 は 8K 48/50/60 のみ。
+   4K24 RGB 10bit（TMDS 371 MHz）は sink 側の制約なし＝上の 8bpc はドライバの選択。

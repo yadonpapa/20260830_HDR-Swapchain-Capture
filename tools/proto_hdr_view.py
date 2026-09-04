@@ -112,6 +112,9 @@ def main() -> int:
     ap.add_argument("--present-loop", action="store_true",
                     help="毎フレーム update() を要求して Present を出し続ける（静止シーンだと Qt は"
                          " Present を止めるので、PresentMon で経路を観測するときに必須）")
+    ap.add_argument("--foreground", action="store_true",
+                    help="表示後に SwitchToThisWindow で自身を前面化する（Windows のみ。隠しシェル/スクリプトから"
+                         "起動したときに Independent Flip を成立させる。操作中の他アプリがあると効かない）")
     ap.add_argument("--list", action="store_true", help="画面一覧と HDR 状態を表示して終了")
     args = ap.parse_args()
 
@@ -240,6 +243,14 @@ def main() -> int:
     else:
         win.setGeometry(g)
         win.showFullScreen()
+
+    if args.foreground and sys.platform == "win32":
+        import ctypes
+
+        def _to_front():
+            ctypes.windll.user32.SwitchToThisWindow(ctypes.c_void_p(int(win.winId())), True)
+            print("前面化: SwitchToThisWindow")
+        QTimer.singleShot(800, _to_front)
 
     if args.present_loop:
         # Qt Quick は静止シーンでは Present を発生させない（PresentMon に行が出ない）。

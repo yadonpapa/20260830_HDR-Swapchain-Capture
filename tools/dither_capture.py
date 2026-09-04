@@ -98,7 +98,9 @@ class Capture:
         if rc != RDL_OK:
             raise SystemExit(f"rdl_initialize failed ({rc})")
         self.h = None
-        self.buf = ctypes.create_string_buffer(64 * 1024 * 1024)
+        # 160 MB: a DeckLink 8K Pro G2 HDMI input reports 4320p (7680x4320 r210 = 133 MB) when the GPU
+        # upscales the desktop to the 8K timing (see PROCEDURE.md §7); 64 MB -> 'buffer too small'.
+        self.buf = ctypes.create_string_buffer(160 * 1024 * 1024)
 
     def devices(self) -> list[tuple[int, str, int]]:
         out = []

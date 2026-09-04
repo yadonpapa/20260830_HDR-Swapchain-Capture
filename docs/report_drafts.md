@@ -106,6 +106,38 @@ same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (da
 
 ---
 
+## 1c. NVIDIA フォーラムへの追補 2（2026-09-04・世代切り分け・**未投稿・文案**）
+
+- §1b への追加投稿案。Ampere（RTX 3070）で同計測を行い、報告の適用範囲を「RTX 50 系」に絞る根拠を伝える。
+  投稿はユーザーが行う（アカウントはユーザー本人）。
+
+```text
+Generation control: the same measurement on an Ampere GPU (GeForce RTX 3070, desktop, driver 610.62).
+
+Setup: RTX 3070 HDMI -> Blackmagic DeckLink 8K Pro G2 HDMI 2.1 input, 2160p23.976 RGB 4:4:4 10 bpc full,
+PQ InfoFrame. The link was verified as 10 bpc three ways (DisplayConfig target mode 3840x2160 @ 23.976
+with identity scaling, Windows Advanced Color bitsPerColorChannel = 10, DeckLink detection RGB444 10-bit),
+and PresentMon ran concurrently: 716/716 presents "Hardware: Independent Flip" for both swapchains.
+
+Result - Ampere behaves differently, and identically for FP16 scRGB and R10G10B10A2:
+- every code on the wire is a multiple of 4 (an 8-bit lattice on the 10-bit link), and
+- every non-black pixel toggles by exactly +-4 between frames (random spatio-temporal dither; no
+  temporal or spatial correlation). The 60-frame time average matches the expected 10-bit PQ code to
+  within one code over the whole ramp and all flat patches, a single frame does not.
+
+So on Ampere the two-code jumps cannot be evaluated at all (there is no 10-bit lattice to skip codes
+from). This narrows the uneven quantisation I reported to the true-10-bit direct scanout path of the
+RTX 50 series; Ampere shows a different, unrelated behaviour (8-bit lattice + dither) that affects
+scRGB and HDR10 alike. Data (ramp rows with per-pixel min/max/mean over 60 frames, patch table,
+summary) are in the same repository under data/osaka3070_*.
+
+Practical note for anyone reproducing with a DeckLink 8K Pro G2: with NVIDIA CP defaults (GPU
+scaling) the 4K desktop is output as a 7680x4320 timing and the link drops to 8 bpc; "Perform scaling
+on: Display" plus re-applying 10 bpc is needed to get the native 4K 10 bpc timing (PROCEDURE.md §7).
+```
+
+---
+
 ## 2. Qt バグトラッカー（新規 issue・**投稿済み 2026-09-04: [QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927)**）
 
 - 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
@@ -259,6 +291,17 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
   近黒 ≤144 の 23 コード欠落＝DWM の PQ→FP16→PQ 往復）・scRGB は iFlip と**完全ビット一致**。
   ＝不均一は R10G10B10A2 全画面の**直接スキャンアウト経路に固有**（「ウィンドウ表示では消える」
   報告と整合）。
+
+### 4.1c NVIDIA フォーラム追補 2 の日本語版（記録用・2026-09-04・未投稿）
+
+- 世代切り分け: RTX 3070（Ampere・610.62）→ DeckLink 8K Pro G2 HDMI 2.1 入力、2160p23.976 RGB 10bpc PQ。
+  リンク 10bpc を DisplayConfig / Windows ACI2 / DeckLink 検出の 3 点で確認、PresentMon 716/716 Independent Flip。
+- 結果: scRGB / HDR10 とも全コードが 4 の倍数（8bit 格子）＋黒以外の全画素が毎フレーム ±4 で揺れるランダム
+  時空間ディザ。60 フレーム平均は期待 10bit PQ コードに ±1 未満で一致、単一フレームは一致しない。
+- 含意: Ampere では 2 コード飛びは評価不能＝報告した不均一量子化は RTX 50 系の真 10bit 直接出力に固有。
+  Ampere は別種の挙動（8bit 格子＋ディザ・scRGB/HDR10 共通）。データは data/osaka3070_*。
+- 再現者向け注意: 8K Pro G2＋NVIDIA CP 既定（GPU スケーリング）だと 4K デスクトップが 8K タイミングで出て 8bpc に
+  降格。「実行デバイス: ディスプレイ」＋10 bpc 再適用で 4K 10bpc ネイティブ（PROCEDURE.md §7）。
 
 ### 4.2 Qt バグ報告の日本語版
 

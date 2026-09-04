@@ -29,7 +29,9 @@ specific to the direct scanout path of the R10G10B10A2 fullscreen swapchain.
 
 Related threads: NVIDIA Developer Forums
 [346429](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429) /
-[343119](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/343119).
+[343119](https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/343119);
+Qt bug (silent SDR fallback of the HDR swapchain, both variants):
+[QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927).
 
 ## What is in here
 

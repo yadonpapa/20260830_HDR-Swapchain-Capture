@@ -106,7 +106,7 @@ same repository: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (da
 
 ---
 
-## 2. Qt バグトラッカー（新規 issue）
+## 2. Qt バグトラッカー（新規 issue・**投稿済み 2026-09-04: [QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927)**）
 
 - 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
   プロジェクト **Qt (QTBUG)**、コンポーネント **Qt RHI**（任意で **GUI: High-DPI** / **Quick: SceneGraph** を追加。

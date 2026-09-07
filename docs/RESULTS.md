@@ -231,7 +231,8 @@ Interpretation:
   DP→HDMI active adapter is an acceptable way to bring a DP‑only card into an HDMI capture card for this
   kind of measurement, provided it really runs 10 bpc (PROCEDURE.md §8).
 * Scope of the NVIDIA report can be stated as "Blackwell (RTX 50 series and RTX PRO Blackwell), Independent
-  Flip, R10G10B10A2 fullscreen" — not laptop‑specific, not branch‑specific.
+  Flip, R10G10B10A2 fullscreen" — not laptop‑specific, not branch‑specific. Posted to thread 346429 on
+  2026‑09‑08 (`docs/report_drafts.md` §1d).
 * Still untested: RTX 40 (Ada) and AMD Radeon (see RESEARCH_NOTES.md), Windows HDR off (SDR 10 bpc),
   YCbCr 4:2:2 12‑bit.
 
@@ -246,7 +247,7 @@ Interpretation:
   ランプ行 3840 px・平坦パッチ 16 点とも **M25（RTX 5090 Laptop）と 1 画素も違わない**。
 * 含意: 不均一量子化は **Blackwell のディスプレイパイプラインの性質**（デスクトップ WS 版・DP 2.1＋外部変換・
   第 3 のドライバ版でも同一）＝リンクエンコーダより上流・プラットフォーム非依存。報告の適用範囲は
-  「Blackwell（RTX 50 系＋RTX PRO Blackwell）」と言える。scRGB がここでもビット一致なので CAC‑1088 は
+  「Blackwell（RTX 50 系＋RTX PRO Blackwell）」と言える（2026‑09‑08 にスレッド 346429 へ投稿済み・`report_drafts.md` §1d）。scRGB がここでもビット一致なので CAC‑1088 は
   4K23.976 RGB 10bit で透過（変換器経由でもコード値計測に使える。手順は PROCEDURE.md §8）。
 * 未計測: RTX 40（Ada）・AMD Radeon・Windows HDR オフ（SDR 10bpc）・YCbCr 4:2:2 12bit。
 

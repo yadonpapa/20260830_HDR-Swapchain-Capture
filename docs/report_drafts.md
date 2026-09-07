@@ -138,13 +138,13 @@ on: Display" plus re-applying 10 bpc is needed to get the native 4K 10 bpc timin
 
 ---
 
-## 1d. NVIDIA フォーラムへの追補 3（2026-09-08・デスクトップ Blackwell 対照・**未投稿**）
+## 1d. NVIDIA フォーラムへの追補 3（2026-09-08・デスクトップ Blackwell 対照・**投稿済み**）
 
 - §1c への追加投稿。RTX PRO 6000 Blackwell（デスクトップ WS 版・DP 2.1 経由・ドライバ 616.56）で同計測を行い、
   RTX 5090 Laptop とビット一致した事実を伝えて、報告の適用範囲を「Blackwell 全般（GeForce RTX 50 ＋ RTX PRO
   Blackwell）・ラップトップ／HDMI／ドライバ系統に非依存」へ広げる。
 - 投稿先: https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429
-  （§1b・§1c と同じスレッドへの返信として）
+  （§1b・§1c と同じスレッドへの返信として。**2026-09-08 に投稿済み**。以下は投稿文の控え）
 
 ```text
 Desktop Blackwell control: the same measurement on an RTX PRO 6000 Blackwell Workstation Edition
@@ -373,7 +373,7 @@ DeckLink 8K Pro G2 で再現する方への実務的な注意: NVIDIA コント�
 （PROCEDURE.md §7）。
 ```
 
-### 4.1d NVIDIA フォーラム追補 3 の日本語版（記録用・2026-09-08・未投稿）
+### 4.1d NVIDIA フォーラム追補 3 の日本語版（記録用・2026-09-08・投稿済み）
 
 - デスクトップ Blackwell 対照: RTX PRO 6000 Blackwell WS Edition（GB202・616.56）→ DP 2.1 → Club3D CAC-1088
   （DP 1.4 → HDMI 2.1 アクティブ・このモードでは DSC 不要）→ DeckLink 4K Extreme 12G HDMI 入力、

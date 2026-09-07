@@ -194,6 +194,64 @@ Consequences:
 
 ---
 
+## 8. Desktop Blackwell control (2026‑09‑08): RTX PRO 6000 Blackwell reproduces the RTX 5090 Laptop result bit for bit
+
+§7 left one question open: is the ≈16‑code periodic quantiser a property of the *laptop* RTX 5090 (HDMI port,
+hybrid‑GPU platform, Game Ready / Studio branch) or of Blackwell in general? Same measurement on a **desktop
+Blackwell workstation GPU** driven through **DisplayPort** (`data/rog6000_*`, `data/rog6000_summary.json`).
+
+### Environment
+
+* NVIDIA **RTX PRO 6000 Blackwell Workstation Edition** (GB202), driver **616.56**, in a Thunderbolt 5 eGPU
+  enclosure on the same ROG laptop as 08‑30; pattern window pinned to it with `QT_D3D_ADAPTER_INDEX=1`
+* Output: the card has DisplayPort 2.1 only → **Club3D CAC‑1088** (DP 1.4 → HDMI 2.1 active adapter,
+  Synaptics, bus‑powered) → HDMI cable → **DeckLink 4K Extreme 12G HDMI in** (r210). No HDFury: the GPU sees
+  the DeckLink's own HDMI‑input EDID (`BMD HDMI`). See PROCEDURE.md §8 for the adapter/cable pitfalls.
+* Signal verified: Windows Advanced Color `bitsPerColorChannel = 10`, HDR on, DeckLink detection
+  `2160p23.98 RGB444+10bit hdr_present=1 eotf=2` (PQ). 4K23.976 RGB 10‑bit is inside the uncompressed DP 1.4
+  budget, so the adapter runs without DSC.
+* PresentMon 2.5.1 concurrent with every capture (40 s window): **757/761 (scRGB) and 758/762 (HDR10)
+  presents `Hardware Composed: Independent Flip`** (the MPO‑plane flavour of independent flip in PresentMon 2.x
+  naming); the 4 `Composed: Flip` rows are the first 4 presents at window creation, 12 s before the capture.
+
+### Results — identical to the RTX 5090 Laptop (M25, §6) to the pixel
+
+| Swapchain | Steps (ideal 4.53 px) | 2‑code jumps | Patches | Temporal | vs `m25_*` |
+|---|---|---|---|---|---|
+| FP16 scRGB | only 4/5 px (4: 397, 5: 449; σ 0.50), monotonic | 0 | ±1 | 0 changed pixels | ramp row **0 differing pixels**, 16 patches identical |
+| R10G10B10A2 HDR10 | 4 … 11 px (4: 428, 5: 244, 6: 78, 8: 12, 9: 23, 10: 12, 11: 1; σ 1.27) | **49, at the same codes** | many +1 | 0 changed pixels | ramp row **0 differing pixels**, 16 patches identical |
+
+Interpretation:
+
+* The uneven quantisation of the R10G10B10A2 direct‑scanout path is a **Blackwell display‑pipeline property**:
+  it reproduces on a desktop workstation part, through DisplayPort 2.1 + an external DP→HDMI converter, on a
+  third driver package (596.36 / 610.62 / 616.56), with the same 49 skipped codes. It sits **upstream of the
+  link encoder** (HDMI on the laptop, DP here) and is independent of the platform (hybrid‑GPU laptop vs eGPU).
+* The scRGB path is byte‑exact here as well, so the CAC‑1088 is **transparent** at 4K23.976 RGB 10‑bit: a
+  DP→HDMI active adapter is an acceptable way to bring a DP‑only card into an HDMI capture card for this
+  kind of measurement, provided it really runs 10 bpc (PROCEDURE.md §8).
+* Scope of the NVIDIA report can be stated as "Blackwell (RTX 50 series and RTX PRO Blackwell), Independent
+  Flip, R10G10B10A2 fullscreen" — not laptop‑specific, not branch‑specific.
+* Still untested: RTX 40 (Ada) and AMD Radeon (see RESEARCH_NOTES.md), Windows HDR off (SDR 10 bpc),
+  YCbCr 4:2:2 12‑bit.
+
+### 日本語（デスクトップ Blackwell 対照 2026‑09‑08）
+
+* §7 の残課題「約 16 コード周期の量子化は RTX 5090 *Laptop*（HDMI・ハイブリッド GPU・GeForce 系ドライバ）固有か、
+  Blackwell 全般か」を、**RTX PRO 6000 Blackwell Workstation Edition**（GB202・ドライバ 616.56・TB5 eGPU）で確認。
+  出力は DP 2.1 のみなので **Club3D CAC‑1088**（DP 1.4 → HDMI 2.1 アクティブ・バスパワー）→ DeckLink 4K Extreme 12G
+  HDMI 入力（HDFury 無し・DeckLink 自身の EDID）。Windows ACI2 10bit・DeckLink 検出 2160p23.98 RGB444 10bit PQ・
+  PresentMon 757/761・758/762 が Independent Flip（残り 4 件はウィンドウ生成時、取り込み開始の 12 秒前）。
+* 結果: scRGB は段幅 4/5 のみ・2 コード飛び 0、HDR10 は段幅 4〜11・**2 コード飛び 49 箇所（同じコード）**。
+  ランプ行 3840 px・平坦パッチ 16 点とも **M25（RTX 5090 Laptop）と 1 画素も違わない**。
+* 含意: 不均一量子化は **Blackwell のディスプレイパイプラインの性質**（デスクトップ WS 版・DP 2.1＋外部変換・
+  第 3 のドライバ版でも同一）＝リンクエンコーダより上流・プラットフォーム非依存。報告の適用範囲は
+  「Blackwell（RTX 50 系＋RTX PRO Blackwell）」と言える。scRGB がここでもビット一致なので CAC‑1088 は
+  4K23.976 RGB 10bit で透過（変換器経由でもコード値計測に使える。手順は PROCEDURE.md §8）。
+* 未計測: RTX 40（Ada）・AMD Radeon・Windows HDR オフ（SDR 10bpc）・YCbCr 4:2:2 12bit。
+
+---
+
 ## 日本語要約
 
 * 環境: RTX 5090 Laptop（Studio 596.36）→ Vertex → PA32UCDM ＋ DeckLink 4K Extreme 12G。2160p23.98 RGB 4:4:4 10bit PQ。

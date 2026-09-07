@@ -37,6 +37,15 @@ is not a comparable reference (and unsuitable for code‑level capture work). Ge
 out of a GeForce into the 8K Pro G2 needed NVIDIA CP *No scaling + Perform scaling on: Display* and a
 re‑applied 10 bpc — see `docs/PROCEDURE.md` §7.
 
+**Desktop Blackwell control 2026‑09‑08** (`docs/RESULTS.md` §8, `data/rog6000_*`): the same measurement on an
+**RTX PRO 6000 Blackwell Workstation Edition** (GB202, driver 616.56) driven through **DisplayPort 2.1 → Club3D
+CAC‑1088 (DP→HDMI 2.1 active adapter) → DeckLink 4K Extreme 12G**, 757/761 and 758/762 presents Independent
+Flip. Result: **bit‑identical to the RTX 5090 Laptop** — the ramp rows of both swapchains and all 16 flat
+patches match `m25_*` pixel for pixel, including the same 49 two‑code jumps at the same codes. The uneven
+R10G10B10A2 quantisation is therefore a **Blackwell display‑pipeline property** (desktop and laptop, HDMI and
+DP, three driver packages), upstream of the link encoder. A DP→HDMI active adapter that really runs 10 bpc is
+transparent for this work; an HDMI‑2.0‑era one scrambled the pixel packing — see `docs/PROCEDURE.md` §8.
+
 What the public record says about **RTX 40**, **driver branches** and **AMD Radeon** (and why AMD and RTX 40 are the next
 measurements worth taking) is collected in `docs/RESEARCH_NOTES.md`.
 
@@ -57,7 +66,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `tools/dxgi_outputs.cpp` | Dump DXGI adapters/outputs with `ColorSpace`, bits, luminance — proves what Windows thinks the output is |
 | `tools/hdr_display.py`, `tools/pq.py` | Windows Advanced‑Color probe (ctypes) and PQ/sRGB curves |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`) |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 | `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering, plus a fact‑check (§D) of generative‑AI answers claiming Radeon / exclusive fullscreen / madVR would give bit‑exact HDR10 under Independent Flip — with implications for the next measurements (EN summary + full JA notes) |
@@ -113,6 +122,14 @@ HDMI 2.1 入力で実施（716/716 Present が Independent Flip）。Ampere は�
 Ampere は比較対象にならない（コード値照合の計測にも不向き）。GeForce → 8K Pro G2 で 4K 10bpc のネイティブ
 タイミングを出すには NVIDIA CP の「スケーリングなし＋実行デバイス＝ディスプレイ」と 10 bpc の再適用が必要
 （`docs/PROCEDURE.md` §7）。詳細は `docs/RESULTS.md` §7・データは `data/osaka3070_*`。
+
+**デスクトップ Blackwell 対照（2026‑09‑08）**: 同じ計測を **RTX PRO 6000 Blackwell Workstation Edition**（GB202・
+ドライバ 616.56）で、**DisplayPort 2.1 → Club3D CAC‑1088（DP→HDMI 2.1 アクティブ変換）→ DeckLink 4K Extreme 12G**
+の経路で実施（757/761・758/762 Present が Independent Flip）。結果は **RTX 5090 Laptop とビット一致**＝両スワップ
+チェーンのランプ行と平坦パッチ 16 点が `m25_*` と 1 画素も違わず、2 コード飛び 49 箇所も同じコード。不均一量子化は
+**Blackwell のディスプレイパイプラインの性質**（デスクトップ／ラップトップ・HDMI／DP・3 つのドライバ版で同一）で、
+リンクエンコーダより上流。10 bpc を本当に通す DP→HDMI 変換器はこの計測に対して透過だが、HDMI 2.0 世代の古い変換器は
+画素のビット詰めを壊した（`docs/PROCEDURE.md` §8）。詳細は `docs/RESULTS.md` §8・データは `data/rog6000_*`。
 
 RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について
 公開情報を調べた結果（次に計測すべき対象の根拠）と、「Radeon／排他的フルスクリーン／madVR なら Bit-Exact になる」という生成 AI 回答の検証（§D）は `docs/RESEARCH_NOTES.md`。

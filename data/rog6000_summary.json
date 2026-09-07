@@ -1,0 +1,129 @@
+{
+  "captures": {
+    "rog6000_scrgb": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1800,
+        3840,
+        8
+      ],
+      "ramp_row_in_roi": 4,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 397,
+        "5": 449
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1
+      ],
+      "two_code_jumps": 0,
+      "skipped_codes": [],
+      "presentmon": {
+        "present_mode": "Hardware Composed: Independent Flip (PresentMon 2.5.1 label; MPO plane) for every present after the first 4 window-creation presents (Composed: Flip), which precede the capture by ~12 s",
+        "presents": 761,
+        "window_s": 40
+      }
+    },
+    "rog6000_hdr10": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1800,
+        3840,
+        8
+      ],
+      "ramp_row_in_roi": 4,
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 428,
+        "5": 244,
+        "6": 78,
+        "8": 12,
+        "9": 23,
+        "10": 12,
+        "11": 1
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1,
+        2
+      ],
+      "two_code_jumps": 49,
+      "skipped_codes": [
+        16,
+        32,
+        79,
+        112,
+        172,
+        189,
+        204,
+        220,
+        236,
+        251,
+        269,
+        285,
+        299,
+        315,
+        331,
+        347,
+        365,
+        380,
+        395,
+        410,
+        427,
+        442,
+        444,
+        459,
+        475,
+        491,
+        506,
+        519,
+        535,
+        552,
+        567,
+        583,
+        598,
+        615,
+        631,
+        648,
+        662,
+        677,
+        694,
+        711,
+        726,
+        742,
+        758,
+        773,
+        790,
+        806,
+        808,
+        822,
+        838
+      ],
+      "presentmon": {
+        "present_mode": "Hardware Composed: Independent Flip (PresentMon 2.5.1 label; MPO plane) for every present after the first 4 window-creation presents (Composed: Flip), which precede the capture by ~12 s",
+        "presents": 762,
+        "window_s": 40
+      }
+    }
+  },
+  "environment": {
+    "date": "2026-09-08",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition (desktop Blackwell, GB202) in a Thunderbolt 5 eGPU enclosure on the ikawa-ROG-STRIX laptop; pattern window pinned to this adapter (QT_D3D_ADAPTER_INDEX=1)",
+    "driver": "616.56",
+    "os": "Windows 11 Pro 26200",
+    "output": "DisplayPort 2.1 -> Club3D CAC-1088 (DP 1.4 -> HDMI 2.1 active adapter, Synaptics, bus-powered) -> HDMI 2.0 cable -> DeckLink 4K Extreme 12G HDMI in (r210). No HDFury; the DeckLink's own HDMI-input EDID (BMD HDMI) is what the GPU sees",
+    "signal": "3840x2160 @ 23.976 Hz RGB 4:4:4 10 bpc full, Windows HDR on (Advanced Color bitsPerColorChannel=10), HDR InfoFrame eotf=PQ",
+    "path_verification": "PresentMon 2.5.1 recorded concurrently with every capture (40 s window): 757/761 (scRGB) and 758/762 (HDR10) presents 'Hardware Composed: Independent Flip'; the 4 'Composed: Flip' rows are the first 4 presents at window creation, before the capture window",
+    "comparison": "ramp rows (3840 px, both swapchains) and all 16 flat patches are bit-identical to data/m25_* (RTX 5090 Laptop, 2026-09-04)"
+  },
+  "notes": [
+    "Desktop Blackwell (GB202 workstation part, driver 616.56, DisplayPort 2.1 output through a DP->HDMI active adapter) reproduces the RTX 5090 Laptop HDMI result pixel for pixel: scRGB step widths 4/5 only, HDR10 4..11 px with the same 49 two-code jumps at the same codes.",
+    "Therefore the ~16-code periodic quantiser in the R10G10B10A2 direct-scanout path is a Blackwell display-pipeline property, upstream of the link encoder (HDMI on the laptop, DP 2.1 + adapter here) and independent of the driver branch tested (596.36 / 610.62 / 616.56).",
+    "The Club3D CAC-1088 is transparent at 4K23.976 RGB 10-bit (no DSC): identical codes to the direct HDMI captures. A previous HDMI-2.0-era DP->HDMI adapter was not usable (see PROCEDURE.md section 8)."
+  ]
+}

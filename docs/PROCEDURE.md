@@ -114,6 +114,37 @@ this combination silently gives you the wrong signal:
    SCDC, FRL; colorimetry BT2020 RGB/YCC; HDR static metadata SDR/HDR/PQ (no HLG); 4:2:0 only for 8K 48/50/60.
    4K24 RGB 10‑bit (TMDS 371 MHz) is within the sink's capabilities — the 8 bpc above is the driver's choice.
 
+### 8. DisplayPort‑only GPU into an HDMI capture card: DP → HDMI active adapters (added 2026‑09‑08)
+
+The RTX PRO 6000 Blackwell has DisplayPort 2.1 outputs only. What worked and what did not
+(`data/rog6000_*`, RESULTS.md §8):
+
+1. **Use an adapter that really carries 10 bpc.** With an older HDMI‑2.0‑era DP→HDMI adapter the NVIDIA CP
+   *Output color depth* list contained **8 bpc only** whatever the desktop colour depth (the adapter's DPCD
+   advertises 8 bpc). Worse, that adapter (a) dropped the HDR InfoFrame (`hdr_present=0`), (b) told the sink
+   "RGB 4:4:4 10‑bit deep colour" regardless of the GPU setting (DeckLink kept detecting `RGB444+10bit` even
+   with the link at 8 bpc, and after re‑plugging), and (c) **scrambled the pixel packing**: a flat patch arrived
+   as five distinct values repeating every 10 px, rotated across R/G/B (only 0 and full‑scale survived). Such
+   captures are unusable at 10 *and* 8 bpc. The **Club3D CAC‑1088** (DP 1.4 → HDMI 2.1, Synaptics, bus‑powered,
+   no DSC needed at 4K23.976 RGB 10‑bit) was **bit‑exact** against the direct‑HDMI captures (`m25_*`).
+2. **If the resolution/refresh list is locked, the adapter did not read the sink's EDID.** Symptom: monitor name
+   `Non‑PnP`, `tools/hdr_display.py` shows no HDR support, the registry EDID under
+   `HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\SYN3000\…` is the adapter's 128‑byte fallback (preferred
+   1024×768, no CEA extension), the mode list is 1080p60 + VGA modes, and the DeckLink reports *no input
+   signal* (the adapter never starts transmitting). Re‑plugging the HDMI end and reversing the plug‑in order did
+   not help; **a different HDMI cable did** (DDC/EDID read failed on the first cable although the DeckLink's
+   EDID itself is valid — checksums OK, CEA block with 4K VICs). After the fix the monitor name is `BMD HDMI`
+   and the 4K/23.976 Hz/10 bpc entries appear.
+3. **Verify all three again after any cable/adapter change**: `tools/hdr_display.py` (`bits/ch=10`, HDR on),
+   the NVIDIA CP *Change resolution* page, and the DeckLink detection line of a probe capture
+   (`2160p23.98 … RGB444+10bit hdr_present=1 eotf=2`).
+4. PresentMon 2.5.1 labels the independent‑flip presents on this output `Hardware Composed: Independent Flip`
+   (MPO plane); treat it like `Hardware: Independent Flip`. The first few presents at window creation are
+   `Composed: Flip` and precede the capture (`--wait 12`).
+5. Side issue seen on the eGPU host: the DeckLink 4K Extreme 12G (PCIe, in the enclosure) came up as
+   *code 43* after a sleep/resume; **Disable → Enable** in Device Manager (admin) restored it without a reboot.
+   Check `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` before blaming the signal chain.
+
 ---
 
 ## 日本語
@@ -200,3 +231,29 @@ GPU の HDMI → HDFury Vertex（EDID はモニタのコピー・パススルー
 5. EDID 要旨（8K Pro G2 HDMI 入力）: HDMI VSDB DC_30/36bit＋DC_Y444・Max TMDS 300 MHz、HF‑VSDB Max TMDS 600 MHz・
    SCDC・FRL、Colorimetry BT2020 RGB/YCC、HDR SM SDR/HDR/PQ（HLG 無し）、4:2:0 は 8K 48/50/60 のみ。
    4K24 RGB 10bit（TMDS 371 MHz）は sink 側の制約なし＝上の 8bpc はドライバの選択。
+
+### 8. DP 専用 GPU を HDMI キャプチャに入れる: DP → HDMI アクティブ変換（2026‑09‑08 追加）
+
+RTX PRO 6000 Blackwell の出力は DisplayPort 2.1 のみ。動いたもの・動かなかったもの（`data/rog6000_*`・RESULTS.md §8）:
+
+1. **10 bpc を本当に通す変換器を使う。** HDMI 2.0 世代の古い DP→HDMI 変換器では、NVIDIA CP の「出力の色の深度」が
+   デスクトップの色の深度に関係なく **8 bpc のみ**（変換器の DPCD が 8 bpc を申告）。さらにその変換器は
+   (a) HDR InfoFrame を落とし（`hdr_present=0`）、(b) GPU 設定に関係なく sink へ「RGB 4:4:4 10bit 深色」を宣言し
+   （リンクを 8 bpc にしても・挿し直しても DeckLink は `RGB444+10bit` のまま）、(c) **画素のビット詰めを壊す**
+   （平坦パッチが 5 値・周期 10 px で R/G/B に回転して届く。0 と飽和だけ無事）。10 bpc でも 8 bpc でも計測に使えない。
+   **Club3D CAC‑1088**（DP 1.4 → HDMI 2.1・Synaptics・バスパワー・4K23.976 RGB 10bit は DSC 不要）は
+   HDMI 直結の取り込み（`m25_*`）と**ビット一致**。
+2. **解像度・リフレッシュの一覧が固定されていたら、変換器が sink の EDID を読めていない。** 症状: モニタ名 `Non‑PnP`、
+   `tools/hdr_display.py` で HDR 非対応、レジストリ `HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\SYN3000\…` の EDID が
+   変換器内蔵の 128 バイト代替品（優先 1024×768・CEA 拡張なし）、モード一覧が 1080p60＋VGA 系のみ、DeckLink は
+   「入力信号なし」（変換器が送信を始めない）。HDMI 側の挿し直し・接続順の逆転では変わらず、**HDMI ケーブルの交換で
+   解消**（DeckLink の EDID 自体は正常＝チェックサム OK・4K VIC 入り CEA ブロック。1 本目のケーブルで DDC 読み出しが
+   失敗していた）。解消後はモニタ名が `BMD HDMI` になり 4K / 23.976 Hz / 10 bpc が選べる。
+3. **ケーブル・変換器を替えたら 3 点を再確認**: `tools/hdr_display.py`（`bits/ch=10`・HDR 有効）、NVIDIA CP
+   「解像度の変更」、probe 取り込みの DeckLink 検出行（`2160p23.98 … RGB444+10bit hdr_present=1 eotf=2`）。
+4. PresentMon 2.5.1 はこの出力の独立フリップを `Hardware Composed: Independent Flip`（MPO プレーン）と表示する。
+   `Hardware: Independent Flip` と同等に扱う。ウィンドウ生成直後の数件は `Composed: Flip` だが取り込み開始
+   （`--wait 12`）より前。
+5. 付随: eGPU ホスト側で DeckLink 4K Extreme 12G（エンクロージャ内 PCIe）がスリープ復帰後に**コード 43** になった。
+   デバイスマネージャーで **無効 → 有効**（管理者）で再起動なしに復旧。信号経路を疑う前に
+   `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` を確認する。

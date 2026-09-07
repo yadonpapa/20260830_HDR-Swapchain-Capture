@@ -138,6 +138,47 @@ on: Display" plus re-applying 10 bpc is needed to get the native 4K 10 bpc timin
 
 ---
 
+## 1d. NVIDIA フォーラムへの追補 3（2026-09-08・デスクトップ Blackwell 対照・**未投稿**）
+
+- §1c への追加投稿。RTX PRO 6000 Blackwell（デスクトップ WS 版・DP 2.1 経由・ドライバ 616.56）で同計測を行い、
+  RTX 5090 Laptop とビット一致した事実を伝えて、報告の適用範囲を「Blackwell 全般（GeForce RTX 50 ＋ RTX PRO
+  Blackwell）・ラップトップ／HDMI／ドライバ系統に非依存」へ広げる。
+- 投稿先: https://forums.developer.nvidia.com/t/uneven-banding-in-fullscreen-hdr-output-with-r10g10b10a2-swapchain/346429
+  （§1b・§1c と同じスレッドへの返信として）
+
+```text
+Desktop Blackwell control: the same measurement on an RTX PRO 6000 Blackwell Workstation Edition
+(GB202, driver 616.56) - i.e. a desktop workstation part, driven through DisplayPort instead of HDMI.
+
+Setup: RTX PRO 6000 DisplayPort 2.1 -> Club3D CAC-1088 (DP 1.4 -> HDMI 2.1 active adapter, no DSC
+needed at this mode) -> Blackmagic DeckLink 4K Extreme 12G HDMI input, 2160p23.976 RGB 4:4:4 10 bpc
+full, PQ InfoFrame. Link verified as 10 bpc (Windows Advanced Color bitsPerColorChannel = 10, DeckLink
+detection RGB444 10-bit with HDR InfoFrame present). PresentMon 2.5.1 ran concurrently: 757/761 (scRGB)
+and 758/762 (HDR10) presents "Hardware Composed: Independent Flip"; the remaining 4 are the first
+presents at window creation, 12 s before the capture window.
+
+Result - bit-identical to the RTX 5090 Laptop captures I posted before:
+- FP16 scRGB: step widths 4/5 px only, monotonic, 0 two-code jumps, 0 pixels changing between frames.
+- R10G10B10A2 HDR10: step widths 4..11 px, 49 two-code jumps at the same codes as before
+  (16, 32, 79, 112, ..., 838), 0 pixels changing between frames.
+- The 3840-px ramp rows of both swapchains and all 16 flat patches match the RTX 5090 Laptop data
+  pixel for pixel (0 differing pixels).
+
+So the uneven quantisation of the R10G10B10A2 fullscreen (Independent Flip) path is not specific to the
+laptop GPU, to the HDMI encoder, or to a driver package: it reproduces on a desktop RTX PRO part through
+DisplayPort with a third driver (596.36 / 610.62 / 616.56), while Ampere (previous post) does not show it.
+It looks like a property of the Blackwell display pipeline upstream of the link encoder, and the scope of
+this report is "Blackwell (GeForce RTX 50 series and RTX PRO Blackwell)".
+
+The scRGB path being byte-exact through the DP->HDMI adapter also shows the adapter is transparent at
+this mode. (An older HDMI-2.0-era DP->HDMI adapter was not usable for this: it dropped the HDR InfoFrame
+and scrambled the 10-bit pixel packing - anyone reproducing through an adapter should check the flat
+patches first.) Data (ramp rows with per-pixel min/max over 60 frames, patch table, summary) are in the
+same repository under data/rog6000_*, procedure notes in PROCEDURE.md §8.
+```
+
+---
+
 ## 2. Qt バグトラッカー（新規 issue・**投稿済み 2026-09-04: [QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927)**）
 
 - 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
@@ -330,6 +371,54 @@ DeckLink 8K Pro G2 で再現する方への実務的な注意: NVIDIA コント�
 4K デスクトップが 7680x4320 のタイミングで出力され、リンクが 8 bpc に落ちます。4K 10 bpc のネイティブ
 タイミングを得るには「スケーリングを実行するデバイス: ディスプレイ」と 10 bpc の再適用が必要です
 （PROCEDURE.md §7）。
+```
+
+### 4.1d NVIDIA フォーラム追補 3 の日本語版（記録用・2026-09-08・未投稿）
+
+- デスクトップ Blackwell 対照: RTX PRO 6000 Blackwell WS Edition（GB202・616.56）→ DP 2.1 → Club3D CAC-1088
+  （DP 1.4 → HDMI 2.1 アクティブ・このモードでは DSC 不要）→ DeckLink 4K Extreme 12G HDMI 入力、
+  2160p23.976 RGB 10bpc PQ。Windows ACI2 10bit・DeckLink 検出 RGB444 10bit＋HDR InfoFrame で確認、
+  PresentMon 757/761・758/762 が Independent Flip（残り 4 件はウィンドウ生成時・取り込みの 12 秒前）。
+- 結果: RTX 5090 Laptop とビット一致。scRGB は段幅 4/5・飛び 0、HDR10 は段幅 4〜11・2 コード飛び 49 箇所
+  （同じコード）。ランプ行 3840 px・平坦パッチ 16 点とも差 0 画素。
+- 含意: 不均一量子化はラップトップ GPU・HDMI エンコーダ・ドライバ版のいずれにも固有でない。デスクトップ RTX PRO
+  で DP 経由・第 3 のドライバでも再現し、Ampere では出ない＝Blackwell のディスプレイパイプライン（リンクエンコーダ
+  より上流）の性質。報告の適用範囲は「Blackwell（GeForce RTX 50 系＋RTX PRO Blackwell）」。
+- 付記: scRGB が変換器経由でもビット一致＝CAC-1088 はこのモードで透過。HDMI 2.0 世代の古い変換器は HDR InfoFrame を
+  落とし 10bit のビット詰めを壊すので使えない（変換器経由で再現する人は平坦パッチを先に確認）。データは
+  data/rog6000_*、手順は PROCEDURE.md §8。
+
+投稿文（§1d）の全文対訳:
+
+```text
+デスクトップ Blackwell 対照: 同じ計測を RTX PRO 6000 Blackwell Workstation Edition（GB202・ドライバ 616.56）、
+すなわちデスクトップのワークステーション向け製品で、HDMI ではなく DisplayPort 経由で行いました。
+
+構成: RTX PRO 6000 の DisplayPort 2.1 → Club3D CAC-1088（DP 1.4 → HDMI 2.1 アクティブ変換。このモードでは
+DSC 不要）→ Blackmagic DeckLink 4K Extreme 12G の HDMI 入力、2160p23.976 RGB 4:4:4 10 bpc フル、PQ InfoFrame。
+リンクが 10 bpc であることを確認済み（Windows Advanced Color の bitsPerColorChannel = 10、DeckLink の検出が
+RGB444 10-bit かつ HDR InfoFrame あり）。PresentMon 2.5.1 を同時に走らせ、757/761（scRGB）・758/762（HDR10）の
+Present が "Hardware Composed: Independent Flip"。残り 4 件はウィンドウ生成時の最初の Present で、取り込み
+開始の 12 秒前です。
+
+結果 — 以前投稿した RTX 5090 Laptop の取り込みとビット単位で一致しました:
+- FP16 scRGB: 段幅は 4/5 px のみ、単調、2 コード飛び 0、フレーム間で変化した画素 0。
+- R10G10B10A2 HDR10: 段幅 4〜11 px、2 コード飛び 49 箇所で、飛ぶコードも以前と同じ（16, 32, 79, 112, …, 838）、
+  フレーム間で変化した画素 0。
+- 両スワップチェーンの 3840 px ランプ行と 16 点の平坦パッチが、RTX 5090 Laptop のデータと画素単位で一致
+  （差のある画素 0）。
+
+したがって R10G10B10A2 全画面（Independent Flip）経路の不均一な量子化は、ラップトップ GPU にも HDMI エンコーダにも
+ドライバパッケージにも固有ではありません。デスクトップの RTX PRO 製品で DisplayPort 経由・第 3 のドライバ
+（596.36 / 610.62 / 616.56）でも再現し、Ampere（前回の投稿）では出ません。リンクエンコーダより上流にある
+Blackwell のディスプレイパイプラインの性質と見え、この報告の適用範囲は「Blackwell（GeForce RTX 50 系および
+RTX PRO Blackwell）」です。
+
+scRGB 経路が DP→HDMI 変換器を通してもバイト単位で正確だったことは、この変換器がこのモードで透過であることも
+示しています。（HDMI 2.0 世代の古い DP→HDMI 変換器はこの用途に使えませんでした。HDR InfoFrame を落とし、
+10 bit の画素のビット詰めを壊しました。変換器経由で再現する方は、まず平坦パッチを確認してください。）
+データ（60 フレームの画素別 min/max 付きランプ行、パッチ表、要約）は同じリポジトリの data/rog6000_*、
+手順のメモは PROCEDURE.md §8 にあります。
 ```
 
 ### 4.2 Qt バグ報告の日本語版

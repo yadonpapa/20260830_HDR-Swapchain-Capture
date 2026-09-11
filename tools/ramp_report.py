@@ -76,7 +76,15 @@ def presentmon_modes(path: str, app: str | None) -> dict:
     appk = "Application" if "Application" in rows[0] else next((k for k in rows[0] if "Application" in k), None)
     sel = [r for r in rows if not app or (appk and r[appk].lower() == app.lower())]
     modes = Counter(r[key] for r in sel) if key else Counter()
-    t = [float(r.get("TimeInSeconds", r.get("CPUStartTime", 0)) or 0) for r in sel]
+    # PresentMon 1.x: TimeInSeconds; 2.x: TimeInMs (or CPUStartTimeInMs); values may be "NA"
+    tk, scale = next(((k, s) for k, s in (("TimeInSeconds", 1.0), ("TimeInMs", 1e-3), ("CPUStartTimeInMs", 1e-3))
+                      if k in rows[0]), (None, 1.0))
+    t = []
+    for r in sel:
+        try:
+            t.append(float(r[tk]) * scale)
+        except (KeyError, TypeError, ValueError):
+            pass
     return {"file": path, "app_filter": app, "presents": len(sel), "present_modes": dict(modes),
             "window_s": round(max(t) - min(t), 1) if t else None}
 

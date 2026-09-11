@@ -253,6 +253,77 @@ Interpretation:
 
 ---
 
+## 9. Experiment A (2026‑09‑11): the missing codes are not in the swapchain — integer codes copied into the back buffer, read back, and still 49 skipped codes on the wire
+
+Every capture up to §8 used the Qt proto pattern, where the PQ codes of the R10G10B10A2 swapchain were produced
+by the application (CPU PQ encode → FP16 texture → bilinear ×2 → output‑merger float→UNORM) and the back buffer
+was never read back. The adversarial review (`docs/hdr-swapchain-adversarial-review-20260911.md`, attack 1) pointed
+out that "app encodes unevenly, driver is fine" was still open. This experiment closes it (`data/a_*`,
+`data/a_summary.json`, procedure in PROCEDURE.md §9).
+
+### Method
+
+* `tools/hdr10_direct.cpp` (plain D3D11): the 10‑bit codes are computed on the CPU as **integers**, placed in a
+  DEFAULT texture and copied into the back buffer with `CopyResource` — no shader, no filtering, no float→UNORM
+  stage. Ramp: `code(x) = round(x · 846 / 3839)`, every code 0..846 exactly once (4–5 px); 16 flat patches.
+* Before every 24th `Present` the back buffer is copied to a staging texture and compared byte for byte with the
+  source; the ramp row is written to a CSV. **80/80 readbacks bit‑identical per run**; the back‑buffer ramp row has
+  0 jumps, step widths {4, 5}, no skipped codes (`a_hdr10_backbuffer` in `a_summary.json`).
+* GPU: RTX PRO 6000 Blackwell (616.56, TB5 eGPU) → DP 2.1 → CAC‑1088 → **HDFury Vertex (EDID emulation)** →
+  HDMI → **UltraStudio 4K Mini** HDMI in (r210). Signal `2160p23.98 RGB444+10bit hdr_present=1 eotf=2`.
+  PresentMon 2.5.1 (elevated) concurrent, 70 s window: **1563/1568 presents `Hardware Composed: Independent
+  Flip`** per run (5 window‑creation presents `Composed: Flip`, before the capture).
+* Control: `--mode scrgb` — the same pattern as IEEE halves (nit/80) into an R16G16B16A16_FLOAT swapchain
+  through the same `CopyResource` path.
+
+### Results (ramp row, 3840 px, 60 frames; all 8 ROI rows identical, R = G = B everywhere)
+
+| Swapchain | Back buffer (readback) | Wire: steps | Wire: 2‑code jumps | Wire: skipped codes | Wire − source |
+|---|---|---|---|---|---|
+| **R10G10B10A2 HDR10** | every code 0..846, 4/5 px, 0 skips | 4: 346, 5: 403, **9: 45, 10: 3** | **49** | **the same 49 codes as `m25_hdr10` / `rog6000_hdr10`** (16, 32, 79, 112, 172, …, 838) | {−1: 14, 0: 2475, +1: 1351} |
+| FP16 scRGB (control) | every code 0..846 (as halves), 0 skips | 4: 377, 5: 441, 9: 13 | 14 | 14, **all ≤ 135** (1, 4, 8, 16, 37, 45, 49, 51, 54, 58, 103, 118, 133, 135) | {−1: 275, 0: 3565} |
+
+Flat patches (G, wire): HDR10 +1 on 11 of 16 (5, 20, 40, 120, 160, 300, 400, 600, 800, 1500, 2000 nit),
+scRGB −1 on 2/5/10 nit and +1 on 1500/2000 nit, the rest exact. No temporal change in any of the 3840×2160×3
+samples over 60 frames on either path; no isolated 1‑px flips (no spatial dither).
+
+### Interpretation
+
+1. **The application‑side hypothesis is dead.** The swapchain provably contained every code; the wire is missing
+   exactly the 49 codes that the Qt proto measurements found on three Blackwell units. The quantiser sits between
+   the R10G10B10A2 swapchain and the link, in the direct‑scanout path — a driver/display‑pipeline property.
+2. The pixel rows differ from `m25`/`rog6000` (885 px) only because the source ramp differs (exact integer codes
+   at 4.53 px vs the proto's continuous FP16 ramp); the **skipped‑code list is identical**, and the +1 patch pattern
+   matches on every patch whose source code is the same.
+3. The scRGB control confirms the tool and the chain: no mid‑tone skip, wire within −1..0 of the source. Its 14
+   near‑black skips (all ≤ 135) are the display pipeline's FP16→PQ re‑encode being exact only to ±1 code near
+   black — a discrete code‑centre ramp exposes that as skips where the earlier continuous ramp absorbed it as
+   step‑width jitter (same exit stage as the 23 near‑black skips of `m25_hdr10_composed`). Mid‑tones: bit‑exact.
+   The earlier "scRGB exact to rounding" wording stands as "exact within ±1 code".
+4. Side findings for the hardware log (PROCEDURE.md §8): the CAC‑1088 again failed to read the capture device's EDID
+   directly (Non‑PnP 1024×768 fallback), and an HDFury Vertex in between (EDID emulation) fixed it; the DeckLink
+   4K Extreme 12G in the AKiTiO Node was unusable when the Node sat behind the TB5 dock (no PCI resources,
+   0xC00000C0) and flaky even when connected directly (code 43 twice) — the UltraStudio 4K Mini was used instead.
+
+### 日本語（実験 A 2026‑09‑11）
+
+* §8 までの取り込みは Qt proto パターン（アプリ側で PQ 符号化 → FP16 テクスチャ → 2 倍バイリニア → 出力マージャの
+  float→UNORM）で、バックバッファの読み戻しも無かった。対立的検証（攻撃 1）の「アプリの符号化が不均一でドライバは正確」
+  を潰すため、`tools/hdr10_direct.cpp`（素の D3D11）で **整数コードを CPU 生成し `CopyResource` でバックバッファへ転写**、
+  24 回に 1 回 Present 直前に読み戻してソースとバイト比較（**80/80 一致**）、ランプ行を CSV 化（飛び 0・段幅 4/5・欠落 0）。
+* 環境: RTX PRO 6000（616.56・TB5 eGPU）→ DP 2.1 → CAC‑1088 → **HDFury Vertex（EDID 偽装）**→ HDMI → **UltraStudio 4K Mini**。
+  信号 2160p23.98 RGB444 10bit PQ。PresentMon（管理者）並走 70 秒: 1563/1568 Present が Independent Flip（残り 5 件は
+  ウィンドウ生成時、取り込み前）。
+* 結果: **HDR10 は線上で同じ 49 コードが欠落**（`m25_hdr10` / `rog6000_hdr10` と欠落一覧が完全一致、段幅 4/5/9/10、
+  線上−ソース {−1: 14, 0: 2475, +1: 1351}、平坦パッチ 16 点中 11 点が +1）。バックバッファには全コードがあったのだから、
+  **量子化はスワップチェーンとリンクの間＝直接スキャンアウト経路**にある。アプリ側説は消えた。
+* 対照 scRGB（同じ経路で FP16）は中間調の欠落ゼロ・線上−ソース {−1: 275, 0: 3565}。近黒 14 コード（≤135）の欠落は、
+  表示側の FP16→PQ 再符号化が近黒で ±1 コード精度であることを離散ランプが露わにしたもの（連続ランプでは段幅の揺れとして
+  吸収されていた。`m25_hdr10_composed` の近黒 23 欠落と同じ出口段）。「scRGB は丸め誤差以内」は「±1 コード以内」と読む。
+* 機材メモ: CAC‑1088 は今回も直接では EDID を読めず（Non‑PnP 1024×768）、Vertex の EDID 偽装で解消。AKiTiO Node の
+  DeckLink 4K Extreme 12G は TB5 ドック配下では PCI リソース未割当（0xC00000C0）、直結でもコード 43 を 2 回起こしたため
+  UltraStudio 4K Mini を使用（PROCEDURE.md §8）。
+
 ## 日本語要約
 
 * 環境: RTX 5090 Laptop（Studio 596.36）→ Vertex → PA32UCDM ＋ DeckLink 4K Extreme 12G。2160p23.98 RGB 4:4:4 10bit PQ。

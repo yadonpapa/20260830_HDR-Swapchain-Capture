@@ -179,6 +179,64 @@ same repository under data/rog6000_*, procedure notes in PROCEDURE.md §8.
 
 ---
 
+## 1e. NVIDIA フォーラムへの追補 4（2026-09-11・実験 A＝スワップチェーン直接書き込み・**未投稿**）
+
+- 対立的検証（`docs/hdr-swapchain-adversarial-review-20260911.md`）で残っていた「アプリ側の PQ 符号化が原因」という
+  反論を潰した実験 A の報告。§1b〜§1d と同じスレッドへの返信。データ `data/a_*`、詳細 `docs/RESULTS.md` §9。
+
+```text
+Subject: Addendum 4 - the missing codes are not in the swapchain (integer codes via CopyResource + back-buffer readback, same 49 skipped codes on the wire)
+
+One objection to my earlier posts was still open: in all of them the PQ codes in the R10G10B10A2 swapchain were
+produced by the application (a Qt Quick texture node: FP16 texture -> bilinear magnification -> the output
+merger's float->UNORM conversion), and I never read the back buffer back. So "the app encodes unevenly, the
+driver is fine" could not be excluded. This closes it.
+
+Method
+- A minimal plain-D3D11 program (tools/hdr10_direct.cpp in the repository below): the 10-bit codes are
+  computed on the CPU as integers, put in a DEFAULT texture and copied into the back buffer with
+  ID3D11DeviceContext::CopyResource. No shader, no render pass, no texture filtering, no float->UNORM stage.
+  Flip-model swapchain, DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020,
+  borderless window covering the output.
+- Ramp: code(x) = round(x * 846 / 3839) across 3840 px - every code 0..846 exactly once, 4 or 5 px each
+  (846 = code of 2000 nit). Plus 16 flat patches 2..2000 nit.
+- Before every 24th Present the back buffer is copied to a staging texture and compared byte for byte with
+  the source, and the ramp row is written to CSV: 80 of 80 readbacks bit-identical, the stored ramp has every
+  code, no skips, steps 4/5 px only. So what entered the display pipeline is proven, not assumed.
+- GPU: RTX PRO 6000 Blackwell Workstation Edition, driver 616.56, DisplayPort 2.1 -> DP->HDMI 2.1 active
+  adapter -> HDFury Vertex (EDID) -> Blackmagic UltraStudio 4K Mini HDMI input, uncompressed 10-bit RGB
+  (r210). Signal on the wire: 3840x2160 @ 23.976, RGB 4:4:4 10 bpc full, HDR InfoFrame EOTF = PQ.
+- PresentMon 2.5.1 recorded concurrently: 1563 of 1568 presents "Hardware Composed: Independent Flip"
+  (the remaining 5 are the window-creation presents, before the capture window). 60 frames captured.
+- Control: the same pattern as IEEE halves (nit / 80) into an R16G16B16A16_FLOAT swapchain through the
+  same CopyResource path.
+
+Result (ramp row, 60 frames, all rows identical, R = G = B)
+| Swapchain                    | Back buffer (readback)       | On the wire                                              |
+|------------------------------|------------------------------|----------------------------------------------------------|
+| R10G10B10A2 (PQ)             | every code 0..846, no skips  | 49 skipped codes - exactly the same 49 as in my earlier  |
+|                              |                              | posts (16, 32, 79, 112, 172, 189, 204, ..., 822, 838),   |
+|                              |                              | step widths 4/5/9/10 px, wire - source: -1 (14 px),      |
+|                              |                              | 0 (2475 px), +1 (1351 px); 11 of 16 flat patches +1      |
+| R16G16B16A16_FLOAT (control) | every code, no skips         | no mid-tone skip, wire - source: -1 (275 px), 0 (3565);  |
+|                              |                              | 14 near-black skips (all <= code 135) = the FP16->PQ     |
+|                              |                              | re-encode of the display path is exact to +-1 code       |
+
+No temporal dithering on either path (0 of 3840x2160x3 samples changed over 60 frames), no spatial dither.
+
+Conclusion
+- The swapchain provably contained every code; the wire is missing the same 49 codes that three Blackwell
+  units (RTX 5090 Laptop x2, RTX PRO 6000; drivers 596.36 / 610.62 / 616.56; HDMI and DP) showed with the
+  Qt-rendered pattern. The quantiser is between the R10G10B10A2 swapchain and the link, in the direct-scanout
+  (Independent Flip) path. It is not the application, not Qt, not the capture chain (the FP16 control through
+  the identical path is exact within +-1 code).
+- The ~16-code period of the skipped codes still looks like segment boundaries of a piecewise-linear LUT
+  applied to the 10-bit surface on scanout.
+- Everything needed to reproduce is in the repository: tools/hdr10_direct.cpp (single file, builds with
+  MinGW g++), the capture/report scripts, the raw ramp rows and the JSON summaries (data/a_*).
+  https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (docs/RESULTS.md section 9)
+```
+
 ## 2. Qt バグトラッカー（新規 issue・**投稿済み 2026-09-04: [QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927)**）
 
 - 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
@@ -420,6 +478,25 @@ scRGB 経路が DP→HDMI 変換器を通してもバイト単位で正確だっ
 データ（60 フレームの画素別 min/max 付きランプ行、パッチ表、要約）は同じリポジトリの data/rog6000_*、
 手順のメモは PROCEDURE.md §8 にあります。
 ```
+
+### 4.1e NVIDIA フォーラム追補 4 の日本語版（記録用・2026-09-11・未投稿）
+
+- 残っていた反論「R10G10B10A2 スワップチェーン内の PQ コードはアプリ（Qt のテクスチャノード: FP16 テクスチャ → バイリニア
+  拡大 → 出力マージャの float→UNORM）が作っており、バックバッファを読み戻していない。だから『アプリの符号化が不均一で
+  ドライバは正確』を排除できない」を潰す。
+- 方法: 素の D3D11 の最小プログラム（`tools/hdr10_direct.cpp`）。10bit コードを CPU で整数として計算し、DEFAULT テクスチャ
+  から `CopyResource` でバックバッファへ。シェーダ・レンダーパス・フィルタ・float→UNORM 段は無い。ランプは
+  `code(x) = round(x·846/3839)`（全コード 0..846 が 1 回ずつ・4〜5 px）＋平坦パッチ 16 点。24 回に 1 回 Present の直前に
+  ステージングへ読み戻してソースとバイト比較（80/80 一致）、ランプ行を CSV 化（欠落 0・段幅 4/5 のみ）。
+- 環境: RTX PRO 6000 Blackwell・616.56・DP 2.1 → DP→HDMI 2.1 変換 → HDFury Vertex（EDID）→ UltraStudio 4K Mini HDMI 入力
+  （r210）。線上 3840×2160 @ 23.976・RGB 4:4:4 10bpc フル・PQ。PresentMon 並走 1563/1568 が Independent Flip。60 フレーム。
+  対照: 同じパターンを IEEE half（nit/80）で R16G16B16A16_FLOAT へ同経路で転写。
+- 結果: HDR10 はバックバッファに全コードがあるのに線上で **前回までと同じ 49 コードが欠落**（段幅 4/5/9/10、線上−ソース
+  −1: 14 px・0: 2475・+1: 1351、平坦パッチ 11/16 が +1）。FP16 対照は中間調の欠落ゼロ・線上−ソース −1: 275・0: 3565、
+  近黒 14 コード（≤135）の欠落は表示側 FP16→PQ 再符号化の ±1 精度。時間・空間ディザ無し。
+- 結論: 量子化は R10G10B10A2 スワップチェーンとリンクの間、直接スキャンアウト（Independent Flip）経路にある。アプリでも
+  Qt でも取り込み系でもない（同一経路の FP16 対照は ±1 以内）。約 16 コード周期は 10bit 面にスキャンアウト時に掛かる
+  区分線形 LUT の境界に見える。再現に必要なものはすべてリポジトリ（単一ファイルの `hdr10_direct.cpp`・スクリプト・生データ）。
 
 ### 4.2 Qt バグ報告の日本語版
 

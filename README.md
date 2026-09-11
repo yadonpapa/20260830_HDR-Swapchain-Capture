@@ -46,6 +46,14 @@ R10G10B10A2 quantisation is therefore a **Blackwell display‑pipeline property*
 DP, three driver packages), upstream of the link encoder. A DP→HDMI active adapter that really runs 10 bpc is
 transparent for this work; an HDMI‑2.0‑era one scrambled the pixel packing — see `docs/PROCEDURE.md` §8.
 
+**Experiment A 2026‑09‑11** (`docs/RESULTS.md` §9, `data/a_*`, `docs/hdr-swapchain-adversarial-review-20260911.md`):
+the last open counter‑argument — "the *application* encodes PQ unevenly, the driver is fine" — is closed. A plain
+D3D11 tool (`tools/hdr10_direct.cpp`) copies **CPU‑generated integer codes** into the R10G10B10A2 back buffer with
+`CopyResource` (no shader, no float→UNORM stage), reads the back buffer back before every Present (**80/80
+bit‑identical**, every code 0..846 present) — and the wire (RTX PRO 6000, Independent Flip verified, UltraStudio
+4K Mini capture) is still missing **exactly the same 49 codes** as `m25_*` / `rog6000_*`. The scRGB control through
+the same path is exact within ±1 code (no mid‑tone skip). The quantiser is between the swapchain and the link.
+
 What the public record says about **RTX 40**, **driver branches** and **AMD Radeon** (and why AMD and RTX 40 are the next
 measurements worth taking) is collected in `docs/RESEARCH_NOTES.md`.
 
@@ -68,7 +76,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `tools/hdr10_direct.cpp` | **Experiment A** (2026‑09‑11, `docs/hdr-swapchain-adversarial-review-20260911.md`): CPU‑generated *integer* PQ codes copied into an R10G10B10A2 (or FP16) flip‑model swapchain with `CopyResource` — no shader, no filtering, no float→UNORM stage; reads the back buffer back before every N‑th Present and proves it bit‑identical to the source (`--readback` CSV of the ramp row). Rules the application‑side encoding in or out. PROCEDURE.md §9 |
 | `tools/ramp_report.py` | Ramp‑row report from a capture `.npz` or a CSV: step widths, 2‑code jumps, skipped codes, spatial/temporal dither indicators, expected‑code and reference comparison, PresentMon present‑mode histogram → `data/`‑style CSV + `*_summary.json` entry |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`) |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`); `a_*` = Experiment A (2026‑09‑11, integer codes via `CopyResource`, back buffer read back; `a_summary.json` incl. the back‑buffer CSV reports and the PresentMon mode counts) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 | `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering, plus a fact‑check (§D) of generative‑AI answers claiming Radeon / exclusive fullscreen / madVR would give bit‑exact HDR10 under Independent Flip — with implications for the next measurements (EN summary + full JA notes) |
@@ -132,6 +140,13 @@ Ampere は比較対象にならない（コード値照合の計測にも不向�
 **Blackwell のディスプレイパイプラインの性質**（デスクトップ／ラップトップ・HDMI／DP・3 つのドライバ版で同一）で、
 リンクエンコーダより上流。10 bpc を本当に通す DP→HDMI 変換器はこの計測に対して透過だが、HDMI 2.0 世代の古い変換器は
 画素のビット詰めを壊した（`docs/PROCEDURE.md` §8）。詳細は `docs/RESULTS.md` §8・データは `data/rog6000_*`。
+
+**実験 A（2026‑09‑11）**（`docs/RESULTS.md` §9・`data/a_*`・`docs/hdr-swapchain-adversarial-review-20260911.md`）:
+残っていた反論「アプリ側の PQ 符号化が不均一でドライバは正確」を潰した。素の D3D11 ツール（`tools/hdr10_direct.cpp`）で
+**CPU 生成の整数コード**を `CopyResource` で R10G10B10A2 バックバッファへ転写（シェーダ無し・float→UNORM 段無し）、
+Present 直前に読み戻して**80/80 ビット一致**（全コード 0..846 が格納済み）を証明したうえで、線上（RTX PRO 6000・
+Independent Flip 確認済み・UltraStudio 4K Mini 取り込み）では `m25_*` / `rog6000_*` と**同じ 49 コードが欠落**。
+同経路の scRGB 対照は ±1 コード以内（中間調の欠落ゼロ）。量子化はスワップチェーンとリンクの間にある。
 
 RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について
 公開情報を調べた結果（次に計測すべき対象の根拠）と、「Radeon／排他的フルスクリーン／madVR なら Bit-Exact になる」という生成 AI 回答の検証（§D）は `docs/RESEARCH_NOTES.md`。

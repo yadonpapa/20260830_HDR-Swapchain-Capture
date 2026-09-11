@@ -144,6 +144,18 @@ The RTX PRO 6000 Blackwell has DisplayPort 2.1 outputs only. What worked and wha
 5. Side issue seen on the eGPU host: the DeckLink 4K Extreme 12G (PCIe, in the enclosure) came up as
    *code 43* after a sleep/resume; **Disable → Enable** in Device Manager (admin) restored it without a reboot.
    Check `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` before blaming the signal chain.
+6. **AKiTiO Node behind a Thunderbolt dock / TB5 enclosure = card without PCI resources** (2026‑09‑11). With the Node
+   daisy‑chained behind the Ugreen TB5 dock the DeckLink 4K Extreme 12G enumerated (PCIe Gen2 ×4 link up) but got
+   **no memory range and no IRQ**; the driver failed with code 10 / `0xC00000C0` (STATUS_DEVICE_DOES_NOT_EXIST), and
+   Disable → Enable did not help (the bridge window is sized at boot). Connecting the Node **directly** to the laptop's
+   TB port fixed it — for a while: the card then dropped to code 43 twice within minutes (after Disable → Enable it
+   came back as code 10 without resources again). Diagnose with `Get-PnpDeviceProperty … DEVPKEY_Device_ProblemStatus`
+   and `Win32_PnPAllocatedResource`; if the Node is flaky, use the UltraStudio 4K Mini (Thunderbolt, no PCIe slot),
+   which was stable all evening.
+7. **CAC‑1088 → capture device EDID read failed again** (2026‑09‑11; a new HDMI cable / plug order did not help this
+   time). Putting an **HDFury Vertex** between the adapter and the capture device (EDID emulation with HDR static
+   metadata) made the output enumerate as a 3840×2160 10‑bit HDR display immediately. The Vertex's EDID carries
+   MaxCLL 4000 / MaxFALL 400, which shows up in the DeckLink/UltraStudio InfoFrame detection — harmless.
 
 ### 9. Experiment A — integer codes written to the back buffer without a shader (added 2026‑09‑11; capture still to be run)
 
@@ -190,7 +202,8 @@ and the ramp row is written to a CSV. What enters the display pipeline is then p
    `--metadata` additionally sets ST.2086 HDR metadata on the swapchain (off by default); the cursor is
    hidden over the window. Smoke test 2026‑09‑11 on the ROG (PA32UCDM on the RTX 5090, 60 Hz): fullscreen
    3840×2160, colour‑space support flags 0x3 (present + overlay), 11/11 readbacks bit‑identical, ~60
-   presents/s. The DeckLink chain was not connected that day, so the capture of step 3 is still open.
+   presents/s. Run for real the same evening (RTX PRO 6000 → CAC‑1088 → HDFury Vertex → UltraStudio 4K Mini, PresentMon
+   elevated, 1563/1568 Independent Flip): results in RESULTS.md §9, `data/a_*`.
 
 ---
 
@@ -304,6 +317,16 @@ RTX PRO 6000 Blackwell の出力は DisplayPort 2.1 のみ。動いたもの・�
 5. 付随: eGPU ホスト側で DeckLink 4K Extreme 12G（エンクロージャ内 PCIe）がスリープ復帰後に**コード 43** になった。
    デバイスマネージャーで **無効 → 有効**（管理者）で再起動なしに復旧。信号経路を疑う前に
    `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` を確認する。
+6. **AKiTiO Node を Thunderbolt ドック／TB5 エンクロージャの下流につなぐと、カードに PCI リソースが割り当てられない**
+   （2026‑09‑11）。Ugreen TB5 ドック配下では DeckLink 4K Extreme 12G は列挙される（PCIe Gen2 ×4 リンクは張れる）が
+   **メモリ範囲も IRQ も無し**で、ドライバはコード 10 / `0xC00000C0`（STATUS_DEVICE_DOES_NOT_EXIST）で開始失敗。
+   無効→有効では直らない（ブリッジのウィンドウは起動時に決まる）。Node を PC の TB ポートへ**直結**すると復旧したが、
+   数分後にコード 43 に落ちる事象が 2 回続いた（無効→有効後は再びコード 10・リソース無し）。診断は
+   `Get-PnpDeviceProperty … DEVPKEY_Device_ProblemStatus` と `Win32_PnPAllocatedResource`。Node が不安定なら、
+   一晩安定していた UltraStudio 4K Mini（Thunderbolt・PCIe スロット無し）を使う。
+7. **CAC‑1088 が取り込み機の EDID を読めない**症状が再発（2026‑09‑11、ケーブル交換・接続順では直らず）。変換器と
+   取り込み機の間に **HDFury Vertex**（HDR 静的メタデータ入り EDID の偽装）を入れたら即座に 3840×2160 10bit HDR の
+   ディスプレイとして列挙された。Vertex の EDID の MaxCLL 4000 / MaxFALL 400 が InfoFrame 検出に出るが無害。
 
 ### 9. 実験 A — シェーダを通さず整数コードをバックバッファへ直接書く（2026‑09‑11 追加・取り込みは未実施）
 
@@ -327,4 +350,5 @@ N 回に 1 回 `Present` の直前にステージングへ読み戻してソー�
    飛びが残る → アプリ側説は消え、NVIDIA へ正式報告へ。飛びが消える → Qt 経路の符号化が原因。先に直す。
 6. 補足: `--windowed` はスモーク用、`--metadata` で ST.2086 メタデータを付ける（既定は無し）。2026‑09‑11 の
    スモーク（ROG・RTX 5090 上の PA32UCDM・60 Hz）: 全画面 3840×2160・色空間サポート 0x3・読み戻し 11/11 ビット一致。
-   この日は DeckLink が未接続だったため、手順 3 の取り込みは未実施。
+   同日夜に本番実施（RTX PRO 6000 → CAC‑1088 → HDFury Vertex → UltraStudio 4K Mini・PresentMon 管理者・1563/1568 が
+   Independent Flip）: 結果は RESULTS.md §9・`data/a_*`。

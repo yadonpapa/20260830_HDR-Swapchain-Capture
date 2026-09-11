@@ -138,10 +138,19 @@
 - スモーク（ROG・RTX 5090 上の PA32UCDM・60 Hz・DeckLink 未接続）: 窓・全画面とも読み戻しがソースとビット一致
   （全画面 3840×2160・色空間サポート 0x3）。PresentMon は非管理者では動かない（警告のみで CSV 無し）。
 
-### 6.3 未実施（ハードウェアが必要）
+### 6.3 実験 A 本番（2026-09-11 22:40〜、結果: ジャンプ残存 → アプリ側説は死亡）
 
-- 実験 A の実キャプチャ（DeckLink/UltraStudio を接続し PROCEDURE.md §9 手順 3〜4。PresentMon は管理者シェル）。
+- 経路: RTX PRO 6000（616.56・TB5 eGPU）→ DP 2.1 → CAC-1088 → HDFury Vertex（EDID 偽装）→ UltraStudio 4K Mini。
+  信号 2160p23.98 RGB444 10bit PQ。PresentMon（管理者）並走: 1563/1568 Present が Independent Flip（5 件はウィンドウ生成時）。
+- HDR10: バックバッファ読み戻し 80/80 ビット一致（全コード 0..846 格納・飛び 0）。線上は **m25 / rog6000 と同じ 49 コードが
+  欠落**（一覧が完全一致）、段幅 4/5/9/10、線上−ソース {−1: 14, 0: 2475, +1: 1351}、平坦パッチ 11/16 が +1。
+- scRGB 対照（同経路・FP16）: 中間調の欠落ゼロ、線上−ソース {−1: 275, 0: 3565}。近黒 14 コード（≤135）の欠落は表示側
+  FP16→PQ 再符号化の ±1 精度が離散ランプで露出したもの（`m25_hdr10_composed` の近黒 23 欠落と同じ出口段）。
+- 判定: §3 実験 A の基準「ジャンプが残る → アプリ側説は死亡、ドライバ/ハード側確定」に該当。**§5 の条件を満たしたので
+  正式報告へ進める**（文案: `docs/report_drafts.md` §1e）。攻撃 1・2 は閉じた。データ `data/a_*`、詳細 RESULTS.md §9。
+
+### 6.4 未実施
+
 - 実験 B（Microsoft D3D12HDR / banding-test-pattern ブランチのビルドと取り込み）、D（60 Hz）、E（Intel iGPU）。
-- 実験 C はランプ行については既に済んでいる: `m25_summary.json` の composed 2 件は ROI（3840×16 行）60 フレームで
-  `ramp_row_pixels_varying_between_frames = 0`、孤立 1px 反転 0（§6.1）。全画面の統計まで欲しければ再取り込み
-  （M25 の npz はこのリポジトリの outputs/ に無い）。
+- 実験 C はランプ行については済んでいる: `m25_summary.json` の composed 2 件は ROI（3840×16 行）60 フレームで
+  `ramp_row_pixels_varying_between_frames = 0`、孤立 1px 反転 0（§6.1）。

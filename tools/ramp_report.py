@@ -156,8 +156,7 @@ def main() -> int:
     if a.out_csv:
         os.makedirs(os.path.dirname(os.path.abspath(a.out_csv)), exist_ok=True)
         with open(a.out_csv, "w", newline="", encoding="utf-8") as f:
-            wr = csv.writer(f, lineterminator="
-")
+            wr = csv.writer(f, lineterminator="\n")
             wr.writerow(["x", "R", "G", "B", "min_over_frames_G", "max_over_frames_G"])
             for x in range(g.shape[0]):
                 wr.writerow([x, int(g[x, 0]), int(g[x, 1]), int(g[x, 2]), int(vmin[x]), int(vmax[x])])

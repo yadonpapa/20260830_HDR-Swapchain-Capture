@@ -305,6 +305,23 @@ samples over 60 frames on either path; no isolated 1‑px flips (no spatial dith
    4K Extreme 12G in the AKiTiO Node was unusable when the Node sat behind the TB5 dock (no PCI resources,
    0xC00000C0) and flaky even when connected directly (code 43 twice) — the UltraStudio 4K Mini was used instead.
 
+### Second unit, same evening: RTX 5090 Laptop, HDMI direct into the UltraStudio (`data/a5090_*`)
+
+The same two runs on the **RTX 5090 Laptop GPU** of the same machine (the 2026‑08‑30 unit), driver 616.56, laptop
+HDMI 2.1 port → UltraStudio 4K Mini directly (its own EDID; no Vertex — see below), signal
+`2160p23.98 RGB444+10bit eotf=2`, PresentMon **1564/1571 (HDR10) and 1505/1510 (scRGB) presents
+`Hardware: Independent Flip`** — the non‑MPO flavour this time. Result: the **whole captured frame
+(3840×2160×3) is bit‑identical to the RTX PRO 6000 run for both swapchains** (0 differing pixels): the same 49
+skipped codes with a provably complete back buffer, the same +1 patches, the same scRGB near‑black skips. Two
+Blackwell parts, two link types (HDMI direct / DP → adapter → Vertex), two present‑mode flavours, one result.
+
+HDCP note: with an HDFury Vertex between the laptop's HDMI port and the UltraStudio, the RTX 5090 engaged
+**HDCP 2.2** on the link (Vertex RX0 showed `2.2`) and the Vertex blanked its non‑HDCP output: the capture locked
+to a valid 4K23.976 RGB 10‑bit PQ timing but every pixel was 0, desktop included. The RTX PRO 6000 → CAC‑1088 →
+Vertex path had not engaged HDCP. Connecting the UltraStudio directly (a sink without HDCP cannot be encrypted
+to) fixed it; the mode then had to be re‑applied (the UltraStudio EDID prefers 4K60, which the driver serves as
+YCbCr 4:2:2 8 bpc — set 23.976 Hz first, then RGB 10 bpc). PROCEDURE.md §8 items 8–9.
+
 ### 日本語（実験 A 2026‑09‑11）
 
 * §8 までの取り込みは Qt proto パターン（アプリ側で PQ 符号化 → FP16 テクスチャ → 2 倍バイリニア → 出力マージャの
@@ -320,6 +337,15 @@ samples over 60 frames on either path; no isolated 1‑px flips (no spatial dith
 * 対照 scRGB（同じ経路で FP16）は中間調の欠落ゼロ・線上−ソース {−1: 275, 0: 3565}。近黒 14 コード（≤135）の欠落は、
   表示側の FP16→PQ 再符号化が近黒で ±1 コード精度であることを離散ランプが露わにしたもの（連続ランプでは段幅の揺れとして
   吸収されていた。`m25_hdr10_composed` の近黒 23 欠落と同じ出口段）。「scRGB は丸め誤差以内」は「±1 コード以内」と読む。
+* 同夜、同じ 2 本を **RTX 5090 Laptop**（8/30 の個体・616.56）でも実施（`data/a5090_*`）: ノートの HDMI 2.1 → UltraStudio 4K Mini
+  直結（UltraStudio 自身の EDID）、2160p23.98 RGB444 10bit PQ、PresentMon 1564/1571（HDR10）・1505/1510（scRGB）が
+  `Hardware: Independent Flip`（MPO 無しの方）。**取り込んだ全フレーム（3840×2160×3）が RTX PRO 6000 の結果と両スワップ
+  チェーンともビット一致**（差 0 画素）＝同じ 49 欠落・同じ +1 パッチ・同じ scRGB 近黒欠落。Blackwell 2 個体・リンク 2 種・
+  提示モード 2 種で同一。
+* HDCP メモ: ノート HDMI → Vertex → UltraStudio の構成では RTX 5090 が **HDCP 2.2** を掛け（Vertex RX0 に `2.2`）、Vertex が
+  非 HDCP 出力をブランクした（4K23.976 RGB 10bit PQ のタイミングは来るが全画素 0、デスクトップも黒）。RTX PRO → CAC‑1088 →
+  Vertex では HDCP は掛からなかった。UltraStudio 直結で解消。直結後は UltraStudio の EDID が 4K60 優先のため YCbCr 4:2:2 8 bpc
+  になるので、23.976 Hz → RGB 10 bpc の順に再設定（PROCEDURE.md §8 の 8〜9）。
 * 機材メモ: CAC‑1088 は今回も直接では EDID を読めず（Non‑PnP 1024×768）、Vertex の EDID 偽装で解消。AKiTiO Node の
   DeckLink 4K Extreme 12G は TB5 ドック配下では PCI リソース未割当（0xC00000C0）、直結でもコード 43 を 2 回起こしたため
   UltraStudio 4K Mini を使用（PROCEDURE.md §8）。

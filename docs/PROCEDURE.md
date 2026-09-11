@@ -156,6 +156,16 @@ The RTX PRO 6000 Blackwell has DisplayPort 2.1 outputs only. What worked and wha
    time). Putting an **HDFury Vertex** between the adapter and the capture device (EDID emulation with HDR static
    metadata) made the output enumerate as a 3840×2160 10‑bit HDR display immediately. The Vertex's EDID carries
    MaxCLL 4000 / MaxFALL 400, which shows up in the DeckLink/UltraStudio InfoFrame detection — harmless.
+8. **HDCP: a Vertex between a GPU's native HDMI port and a capture device can blank the picture** (2026‑09‑11). The RTX
+   5090 Laptop's HDMI transmitter engaged **HDCP 2.2** with the Vertex (Vertex GUI: `RX0: … 2.2`), and the Vertex cannot
+   pass decrypted video to a sink without HDCP, so its TX to the UltraStudio carried a valid 4K23.976 RGB 10‑bit PQ
+   timing with **every pixel 0** (desktop included — check a probe frame for non‑zero pixels, not just the detection
+   line). The RTX PRO 6000 → CAC‑1088 → Vertex path did not engage HDCP. Fix: connect the capture device **directly**
+   (a sink that does not advertise HDCP cannot be encrypted to); the UltraStudio's own EDID advertises HDR10 + 10‑bit.
+9. After re‑plugging a capture device with a 4K60‑preferred EDID (UltraStudio) the driver comes up at **4K60 YCbCr 4:2:2
+   8 bpc**; re‑apply **23.976 Hz first, then RGB 10 bpc** (NVIDIA CP), and re‑probe (`RGB444+10bit`, Windows
+   `bits/ch=10`). If NVIDIA CP opens on the capture display (invisible), move its window with `SetWindowPos`
+   from PowerShell (process `nvcplui`) instead of guessing blind.
 
 ### 9. Experiment A — integer codes written to the back buffer without a shader (added 2026‑09‑11; capture still to be run)
 
@@ -327,6 +337,14 @@ RTX PRO 6000 Blackwell の出力は DisplayPort 2.1 のみ。動いたもの・�
 7. **CAC‑1088 が取り込み機の EDID を読めない**症状が再発（2026‑09‑11、ケーブル交換・接続順では直らず）。変換器と
    取り込み機の間に **HDFury Vertex**（HDR 静的メタデータ入り EDID の偽装）を入れたら即座に 3840×2160 10bit HDR の
    ディスプレイとして列挙された。Vertex の EDID の MaxCLL 4000 / MaxFALL 400 が InfoFrame 検出に出るが無害。
+8. **HDCP: GPU の HDMI 端子と取り込み機の間に Vertex を入れると画が黒になることがある**（2026‑09‑11）。RTX 5090 Laptop の
+   HDMI 送信側が Vertex と **HDCP 2.2** を張り（Vertex GUI の `RX0: … 2.2`）、Vertex は非 HDCP シンクへ復号映像を出せないため、
+   UltraStudio へは 4K23.976 RGB 10bit PQ の正常なタイミングで**全画素 0**が届く（デスクトップも黒。検出行だけでなく probe
+   フレームの非ゼロ画素を確認すること）。RTX PRO 6000 → CAC‑1088 → Vertex では HDCP は掛からなかった。対処は取り込み機の
+   **直結**（HDCP を宣言しないシンクには暗号化できない）。UltraStudio 自身の EDID は HDR10 と 10bit を宣言している。
+9. 4K60 優先の EDID を持つ取り込み機（UltraStudio）を挿し直すとドライバは **4K60 YCbCr 4:2:2 8 bpc** で立ち上がる。
+   NVIDIA CP で **23.976 Hz を先に、次に RGB 10 bpc** を適用し、probe で `RGB444+10bit`・Windows `bits/ch=10` を再確認。
+   NVIDIA CP が取り込み側の画面（見えない）に開いたら、PowerShell から `SetWindowPos`（プロセス `nvcplui`）で移動する。
 
 ### 9. 実験 A — シェーダを通さず整数コードをバックバッファへ直接書く（2026‑09‑11 追加・取り込みは未実施）
 

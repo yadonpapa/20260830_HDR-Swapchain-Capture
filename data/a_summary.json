@@ -234,6 +234,241 @@
           "0": 3840
         }
       }
+    },
+    "a5090_hdr10": {
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1800,
+        3840,
+        8
+      ],
+      "ramp_row_in_roi": 4,
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "source": "outputs/exp_a/a5090_hdr10.npz",
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 346,
+        "5": 403,
+        "9": 45,
+        "10": 3
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1,
+        2
+      ],
+      "two_code_jumps": 49,
+      "non_monotonic_steps": 0,
+      "isolated_1px_flips": 0,
+      "skipped_codes": [
+        16,
+        32,
+        79,
+        112,
+        172,
+        189,
+        204,
+        220,
+        236,
+        251,
+        269,
+        285,
+        299,
+        315,
+        331,
+        347,
+        365,
+        380,
+        395,
+        410,
+        427,
+        442,
+        444,
+        459,
+        475,
+        491,
+        506,
+        519,
+        535,
+        552,
+        567,
+        583,
+        598,
+        615,
+        631,
+        648,
+        662,
+        677,
+        694,
+        711,
+        726,
+        742,
+        758,
+        773,
+        790,
+        806,
+        808,
+        822,
+        838
+      ],
+      "code_range": [
+        0,
+        847
+      ],
+      "rgb_equal_fraction": 1.0,
+      "vs_expected": {
+        "model": "round(x*846/(W-1))",
+        "mean": 0.348,
+        "histogram": {
+          "-1": 14,
+          "0": 2475,
+          "1": 1351
+        }
+      },
+      "vs_reference": {
+        "file": "data/a_hdr10_ramp_row.csv",
+        "differing_pixels_G": 0,
+        "width_compared": 3840
+      },
+      "presentmon": {
+        "file": "outputs/exp_a/pm_a5090_hdr10.csv",
+        "app_filter": "hdr10_direct.exe",
+        "presents": 1571,
+        "present_modes": {
+          "Composed: Flip": 7,
+          "Hardware: Independent Flip": 1564
+        },
+        "window_s": 65.3
+      }
+    },
+    "a5090_hdr10_backbuffer": {
+      "frames": 1,
+      "source": "outputs/exp_a/a5090_hdr10_backbuffer.csv",
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 391,
+        "5": 454
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1
+      ],
+      "two_code_jumps": 0,
+      "non_monotonic_steps": 0,
+      "isolated_1px_flips": 0,
+      "skipped_codes": [],
+      "code_range": [
+        0,
+        846
+      ],
+      "rgb_equal_fraction": 1.0,
+      "vs_expected": {
+        "model": "round(x*846/(W-1))",
+        "mean": 0.0,
+        "histogram": {
+          "0": 3840
+        }
+      }
+    },
+    "a5090_scrgb": {
+      "frames": 60,
+      "roi_xywh": [
+        0,
+        1800,
+        3840,
+        8
+      ],
+      "ramp_row_in_roi": 4,
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "source": "outputs/exp_a/a5090_scrgb.npz",
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 377,
+        "5": 441,
+        "9": 13
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1,
+        2
+      ],
+      "two_code_jumps": 14,
+      "non_monotonic_steps": 0,
+      "isolated_1px_flips": 0,
+      "skipped_codes": [
+        1,
+        4,
+        8,
+        16,
+        37,
+        45,
+        49,
+        51,
+        54,
+        58,
+        103,
+        118,
+        133,
+        135
+      ],
+      "code_range": [
+        0,
+        846
+      ],
+      "rgb_equal_fraction": 1.0,
+      "vs_expected": {
+        "model": "round(x*846/(W-1))",
+        "mean": -0.072,
+        "histogram": {
+          "-1": 275,
+          "0": 3565
+        }
+      },
+      "vs_reference": {
+        "file": "data/a_scrgb_ramp_row.csv",
+        "differing_pixels_G": 0,
+        "width_compared": 3840
+      },
+      "presentmon": {
+        "file": "outputs/exp_a/pm_a5090_scrgb.csv",
+        "app_filter": "hdr10_direct.exe",
+        "presents": 1510,
+        "present_modes": {
+          "Composed: Flip": 5,
+          "Hardware: Independent Flip": 1505
+        },
+        "window_s": 65.3
+      }
+    },
+    "a5090_scrgb_backbuffer": {
+      "frames": 1,
+      "source": "outputs/exp_a/a5090_scrgb_backbuffer.csv",
+      "ramp_row_pixels_varying_between_frames": 0,
+      "ramp_row_step_width_histogram": {
+        "4": 391,
+        "5": 454
+      },
+      "ramp_row_adjacent_diff_values": [
+        0,
+        1
+      ],
+      "two_code_jumps": 0,
+      "non_monotonic_steps": 0,
+      "isolated_1px_flips": 0,
+      "skipped_codes": [],
+      "code_range": [
+        0,
+        846
+      ],
+      "rgb_equal_fraction": 1.0,
+      "vs_expected": {
+        "model": "round(x*846/(W-1))",
+        "mean": 0.0,
+        "histogram": {
+          "0": 3840
+        }
+      }
     }
   },
   "environment": {
@@ -321,6 +556,42 @@
       769,
       815,
       847
+    ],
+    "a5090_hdr10_wire": [
+      193,
+      255,
+      307,
+      366,
+      430,
+      497,
+      540,
+      570,
+      594,
+      637,
+      669,
+      713,
+      745,
+      769,
+      815,
+      847
+    ],
+    "a5090_scrgb_wire": [
+      192,
+      253,
+      306,
+      365,
+      429,
+      497,
+      539,
+      569,
+      594,
+      636,
+      668,
+      712,
+      744,
+      769,
+      815,
+      847
     ]
   },
   "notes": [
@@ -328,6 +599,16 @@
     "The pixel rows differ from m25/rog6000 (885 px) only because the source ramp differs (integer codes at 4.53 px vs the Qt proto's continuous FP16 ramp); the skipped codes do not.",
     "Wire vs source, HDR10: {-1: 14, 0: 2475, +1: 1351}; 11 of 16 flat patches +1 (same patches as on 08-30 where the source code agrees).",
     "scRGB control (R16G16B16A16_FLOAT, value = nit/80 as IEEE half, same CopyResource path): no mid-tone skip; wire vs source {-1: 275, 0: 3565}; 14 skipped codes all <= 135 (1,4,8,16,37,45,49,51,54,58,103,118,133,135) = the display pipeline's FP16->PQ re-encode is exact only to +-1 code near black, which a discrete code-centre ramp exposes as skips while the earlier continuous ramp did not (cf. the 23 near-black skips of m25_hdr10_composed, same exit stage). Mid-tone: bit-exact.",
-    "No temporal dithering on either path (0 of 3840x2160x3 samples changed over 60 frames); no spatial dither (0 isolated 1-px flips)."
-  ]
+    "No temporal dithering on either path (0 of 3840x2160x3 samples changed over 60 frames); no spatial dither (0 isolated 1-px flips).",
+    "RTX 5090 Laptop (HDMI direct, 'Hardware: Independent Flip'): whole-frame bit-identical to the RTX PRO 6000 run (DP -> adapter -> Vertex -> UltraStudio, 'Hardware Composed: Independent Flip') for both swapchains. Same 49 skipped codes with a provably complete back buffer on a second Blackwell part, second link type and second present-mode flavour."
+  ],
+  "environment_a5090": {
+    "date": "2026-09-11 (23:26-23:30)",
+    "gpu": "NVIDIA GeForce RTX 5090 Laptop GPU (ikawa-ROG-STRIX, first unit of 2026-08-30), D3D11 device on that adapter",
+    "driver": "616.56",
+    "output": "laptop HDMI 2.1 port -> HDMI cable -> Blackmagic UltraStudio 4K Mini HDMI in directly (its own EDID 'BMD HDMI'), r210. An HDFury Vertex in between was NOT usable here: the RTX 5090's HDMI transmitter engaged HDCP 2.2 with the Vertex (Vertex RX0 showed '2.2') and the Vertex blanked its non-HDCP output -> all-black frames with a valid 4K23.976 RGB 10-bit PQ timing (see PROCEDURE.md section 8)",
+    "signal": "3840x2160 @ 23.976 Hz RGB 4:4:4 10 bpc full, Windows HDR on (bitsPerColorChannel=10), HDR InfoFrame eotf=PQ, MaxCLL/MaxFALL 0 (no metadata set by the tool; no Vertex)",
+    "path_verification": "PresentMon 2.5.1 (elevated), 70 s window: hdr10 1564/1571 and scrgb 1505/1510 presents 'Hardware: Independent Flip' (not the MPO flavour this time); the 7 / 5 'Composed: Flip' rows are the window-creation presents before the capture",
+    "comparison": "whole captured frame (3840x2160x3, frame 0) bit-identical to the RTX PRO 6000 run of the same evening for both swapchains (0 differing pixels), i.e. identical 49 skipped codes, identical patches"
+  }
 }

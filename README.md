@@ -50,8 +50,9 @@ transparent for this work; an HDMI‑2.0‑era one scrambled the pixel packing �
 the last open counter‑argument — "the *application* encodes PQ unevenly, the driver is fine" — is closed. A plain
 D3D11 tool (`tools/hdr10_direct.cpp`) copies **CPU‑generated integer codes** into the R10G10B10A2 back buffer with
 `CopyResource` (no shader, no float→UNORM stage), reads the back buffer back before every Present (**80/80
-bit‑identical**, every code 0..846 present) — and the wire (RTX PRO 6000, Independent Flip verified, UltraStudio
-4K Mini capture) is still missing **exactly the same 49 codes** as `m25_*` / `rog6000_*`. The scRGB control through
+bit‑identical**, every code 0..846 present) — and the wire is still missing **exactly the same 49 codes** as `m25_*` / `rog6000_*` — on the **RTX PRO 6000**
+(DP → adapter → Vertex → UltraStudio 4K Mini, `Hardware Composed: Independent Flip`) and on the **RTX 5090 Laptop**
+(HDMI direct, `Hardware: Independent Flip`), whose captured frames are bit‑identical to each other. The scRGB control through
 the same path is exact within ±1 code (no mid‑tone skip). The quantiser is between the swapchain and the link.
 
 What the public record says about **RTX 40**, **driver branches** and **AMD Radeon** (and why AMD and RTX 40 are the next
@@ -76,7 +77,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `tools/hdr10_direct.cpp` | **Experiment A** (2026‑09‑11, `docs/hdr-swapchain-adversarial-review-20260911.md`): CPU‑generated *integer* PQ codes copied into an R10G10B10A2 (or FP16) flip‑model swapchain with `CopyResource` — no shader, no filtering, no float→UNORM stage; reads the back buffer back before every N‑th Present and proves it bit‑identical to the source (`--readback` CSV of the ramp row). Rules the application‑side encoding in or out. PROCEDURE.md §9 |
 | `tools/ramp_report.py` | Ramp‑row report from a capture `.npz` or a CSV: step widths, 2‑code jumps, skipped codes, spatial/temporal dither indicators, expected‑code and reference comparison, PresentMon present‑mode histogram → `data/`‑style CSV + `*_summary.json` entry |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`); `a_*` = Experiment A (2026‑09‑11, integer codes via `CopyResource`, back buffer read back; `a_summary.json` incl. the back‑buffer CSV reports and the PresentMon mode counts) |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`); `a_*` / `a5090_*` = Experiment A (2026‑09‑11, integer codes via `CopyResource`, back buffer read back; RTX PRO 6000 / RTX 5090 Laptop; `a_summary.json` incl. the back‑buffer CSV reports and the PresentMon mode counts) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 | `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering, plus a fact‑check (§D) of generative‑AI answers claiming Radeon / exclusive fullscreen / madVR would give bit‑exact HDR10 under Independent Flip — with implications for the next measurements (EN summary + full JA notes) |
@@ -144,8 +145,9 @@ Ampere は比較対象にならない（コード値照合の計測にも不向�
 **実験 A（2026‑09‑11）**（`docs/RESULTS.md` §9・`data/a_*`・`docs/hdr-swapchain-adversarial-review-20260911.md`）:
 残っていた反論「アプリ側の PQ 符号化が不均一でドライバは正確」を潰した。素の D3D11 ツール（`tools/hdr10_direct.cpp`）で
 **CPU 生成の整数コード**を `CopyResource` で R10G10B10A2 バックバッファへ転写（シェーダ無し・float→UNORM 段無し）、
-Present 直前に読み戻して**80/80 ビット一致**（全コード 0..846 が格納済み）を証明したうえで、線上（RTX PRO 6000・
-Independent Flip 確認済み・UltraStudio 4K Mini 取り込み）では `m25_*` / `rog6000_*` と**同じ 49 コードが欠落**。
+Present 直前に読み戻して**80/80 ビット一致**（全コード 0..846 が格納済み）を証明したうえで、線上では `m25_*` / `rog6000_*` と**同じ 49 コードが欠落**（**RTX PRO 6000**＝DP → 変換器 → Vertex → UltraStudio 4K Mini・
+`Hardware Composed: Independent Flip`、**RTX 5090 Laptop**＝HDMI 直結・`Hardware: Independent Flip`。両者の取り込みフレームは
+ビット一致）。
 同経路の scRGB 対照は ±1 コード以内（中間調の欠落ゼロ）。量子化はスワップチェーンとリンクの間にある。
 
 RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について

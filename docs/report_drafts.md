@@ -210,6 +210,9 @@ Method
   (the remaining 5 are the window-creation presents, before the capture window). 60 frames captured.
 - Control: the same pattern as IEEE halves (nit / 80) into an R16G16B16A16_FLOAT swapchain through the
   same CopyResource path.
+- Repeated on a second Blackwell part the same evening: GeForce RTX 5090 Laptop GPU (616.56), HDMI 2.1 port
+  straight into the UltraStudio, 1564/1571 (HDR10) and 1505/1510 (FP16) presents "Hardware: Independent Flip"
+  (the non-MPO flavour). The captured frames are bit-identical to the RTX PRO 6000 ones for both swapchains.
 
 Result (ramp row, 60 frames, all rows identical, R = G = B)
 | Swapchain                    | Back buffer (readback)       | On the wire                                              |
@@ -227,7 +230,8 @@ No temporal dithering on either path (0 of 3840x2160x3 samples changed over 60 f
 Conclusion
 - The swapchain provably contained every code; the wire is missing the same 49 codes that three Blackwell
   units (RTX 5090 Laptop x2, RTX PRO 6000; drivers 596.36 / 610.62 / 616.56; HDMI and DP) showed with the
-  Qt-rendered pattern. The quantiser is between the R10G10B10A2 swapchain and the link, in the direct-scanout
+  Qt-rendered pattern - and this direct-write test reproduces it on two of them (RTX PRO 6000 via DP and an
+  adapter, RTX 5090 Laptop via native HDMI) with bit-identical frames. The quantiser is between the R10G10B10A2 swapchain and the link, in the direct-scanout
   (Independent Flip) path. It is not the application, not Qt, not the capture chain (the FP16 control through
   the identical path is exact within +-1 code).
 - The ~16-code period of the skipped codes still looks like segment boundaries of a piecewise-linear LUT
@@ -489,7 +493,8 @@ scRGB 経路が DP→HDMI 変換器を通してもバイト単位で正確だっ
   `code(x) = round(x·846/3839)`（全コード 0..846 が 1 回ずつ・4〜5 px）＋平坦パッチ 16 点。24 回に 1 回 Present の直前に
   ステージングへ読み戻してソースとバイト比較（80/80 一致）、ランプ行を CSV 化（欠落 0・段幅 4/5 のみ）。
 - 環境: RTX PRO 6000 Blackwell・616.56・DP 2.1 → DP→HDMI 2.1 変換 → HDFury Vertex（EDID）→ UltraStudio 4K Mini HDMI 入力
-  （r210）。線上 3840×2160 @ 23.976・RGB 4:4:4 10bpc フル・PQ。PresentMon 並走 1563/1568 が Independent Flip。60 フレーム。
+  （r210）。同夜 RTX 5090 Laptop（HDMI 直結・`Hardware: Independent Flip` 1564/1571・1505/1510）でも実施し、取り込みフレームは
+  RTX PRO 6000 とビット一致。線上 3840×2160 @ 23.976・RGB 4:4:4 10bpc フル・PQ。PresentMon 並走 1563/1568 が Independent Flip。60 フレーム。
   対照: 同じパターンを IEEE half（nit/80）で R16G16B16A16_FLOAT へ同経路で転写。
 - 結果: HDR10 はバックバッファに全コードがあるのに線上で **前回までと同じ 49 コードが欠落**（段幅 4/5/9/10、線上−ソース
   −1: 14 px・0: 2475・+1: 1351、平坦パッチ 11/16 が +1）。FP16 対照は中間調の欠落ゼロ・線上−ソース −1: 275・0: 3565、

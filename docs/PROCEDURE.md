@@ -145,6 +145,53 @@ The RTX PRO 6000 Blackwell has DisplayPort 2.1 outputs only. What worked and wha
    *code 43* after a sleep/resume; **Disable → Enable** in Device Manager (admin) restored it without a reboot.
    Check `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` before blaming the signal chain.
 
+### 9. Experiment A — integer codes written to the back buffer without a shader (added 2026‑09‑11; capture still to be run)
+
+Why: in every capture so far the PQ codes in the R10G10B10A2 swapchain were produced *by the application*
+(CPU PQ encode → FP16 texture → bilinear ×2 magnification in Qt's texture node → the output merger's
+float→UNORM conversion), and the back buffer was never read back. A reviewer can therefore still say "the
+app's encoding is uneven, the driver is fine" (`docs/hdr-swapchain-adversarial-review-20260911.md`, attack 1).
+`tools/hdr10_direct.cpp` removes every one of those stages: the 10‑bit codes are computed on the CPU as
+integers, placed in a DEFAULT texture and copied into the back buffer with `CopyResource`; before every
+N‑th `Present` the back buffer is copied to a staging texture and compared byte for byte with the source,
+and the ramp row is written to a CSV. What enters the display pipeline is then proven, not assumed.
+
+1. Build (MinGW‑w64, same as `dxgi_outputs.cpp`):
+   `g++ -std=c++17 -O2 tools/hdr10_direct.cpp -o tools/hdr10_direct.exe -ld3d11 -ldxgi -lole32 -luser32 -lgdi32`
+2. `tools\hdr10_direct.exe --list` → the display index of the capture input (`BMD HDMI` / UltraStudio:
+   3840×2160, `bits=10`, `ColorSpace=12`). The D3D device is created on the adapter that owns that output,
+   so no `QT_D3D_ADAPTER_INDEX` is needed on hybrid‑GPU machines.
+3. Pattern + capture + PresentMon (PresentMon needs an elevated shell, see §6):
+
+   ```powershell
+   Start-Process tools\hdr10_direct.exe -ArgumentList "--display <k> --mode hdr10 --seconds 70 --readback outputs\exp_a\a_hdr10_backbuffer.csv" -RedirectStandardOutput outputs\exp_a\a_hdr10.log
+   PresentMon-x64.exe --output_file outputs\exp_a\pm_a_hdr10.csv --timed 40 --terminate_after_timed --session_name pmA --no_console_stats   # elevated
+   uv run python tools/dither_capture.py --device <N> --frames 60 --skip 10 --wait 12 --roi 0,1800,3840,8 --out outputs/exp_a/a_hdr10.npz --label a_hdr10
+   ```
+
+   The log must contain `back buffer vs source — 0 of 2160 rows differ` for the first readback and end with
+   `… 0 with mismatches` (exit code 0; 3 = a mismatch was seen). Repeat with `--mode scrgb` (FP16 values
+   = nit/80 as IEEE halves, same `CopyResource` path) as the control that the tool itself is sound.
+4. Report, in the `data/` format:
+
+   ```powershell
+   uv run python tools/ramp_report.py outputs/exp_a/a_hdr10.npz --row 4 --label a_hdr10 --ref data/m25_hdr10_ramp_row.csv --presentmon outputs/exp_a/pm_a_hdr10.csv --pm-app hdr10_direct.exe --out-csv data/a_hdr10_ramp_row.csv --out-json data/a_summary.json
+   uv run python tools/ramp_report.py outputs/exp_a/a_hdr10_backbuffer.csv --label a_hdr10_backbuffer --out-json data/a_summary.json
+   ```
+
+   The back‑buffer CSV must report 0 two‑code jumps, step widths {4, 5} and no skipped codes (that is the
+   proof of what was stored). The captured row is then compared with it.
+5. Reading the result. The ramp of this tool is `code(x) = round(x · 846 / 3839)` — every code 0..846
+   exactly once, 4 or 5 px — not the `proto_hdr_view` ramp, so compare the **skipped‑code lists** with
+   `m25_summary.json` (the same 49 codes are expected if the quantiser sits in the scanout path), not the
+   rows pixel for pixel. Jumps persist → the application‑side hypothesis is dead and the report can go to
+   NVIDIA. Jumps vanish → the Qt path's encoding is at fault; fix it before reporting anything.
+6. Notes: the window is a borderless popup exactly covering the output (`--windowed` for a smoke test);
+   `--metadata` additionally sets ST.2086 HDR metadata on the swapchain (off by default); the cursor is
+   hidden over the window. Smoke test 2026‑09‑11 on the ROG (PA32UCDM on the RTX 5090, 60 Hz): fullscreen
+   3840×2160, colour‑space support flags 0x3 (present + overlay), 11/11 readbacks bit‑identical, ~60
+   presents/s. The DeckLink chain was not connected that day, so the capture of step 3 is still open.
+
 ---
 
 ## 日本語
@@ -257,3 +304,27 @@ RTX PRO 6000 Blackwell の出力は DisplayPort 2.1 のみ。動いたもの・�
 5. 付随: eGPU ホスト側で DeckLink 4K Extreme 12G（エンクロージャ内 PCIe）がスリープ復帰後に**コード 43** になった。
    デバイスマネージャーで **無効 → 有効**（管理者）で再起動なしに復旧。信号経路を疑う前に
    `Get-PnpDevice -PresentOnly | ? FriendlyName -match DeckLink` を確認する。
+
+### 9. 実験 A — シェーダを通さず整数コードをバックバッファへ直接書く（2026‑09‑11 追加・取り込みは未実施）
+
+これまでの取り込みでは、R10G10B10A2 スワップチェーン内の PQ コードは**アプリ側**が作っていた
+（CPU で PQ 符号化 → FP16 テクスチャ → Qt のテクスチャノードで 2 倍バイリニア拡大 → 出力マージャの
+float→UNORM 変換）うえ、バックバッファの読み戻しも無い。「アプリの符号化が不均一でドライバは正確」という
+反論（`docs/hdr-swapchain-adversarial-review-20260911.md` 攻撃 1）が残る。`tools/hdr10_direct.cpp` はこれらの段を
+すべて外す: 10bit コードを CPU で整数として生成し、DEFAULT テクスチャから `CopyResource` でバックバッファへ転写、
+N 回に 1 回 `Present` の直前にステージングへ読み戻してソースとバイト比較し、ランプ行を CSV に書く。
+
+1. ビルド: `g++ -std=c++17 -O2 tools/hdr10_direct.cpp -o tools/hdr10_direct.exe -ld3d11 -ldxgi -lole32 -luser32 -lgdi32`
+2. `tools\hdr10_direct.exe --list` で取り込み入力（`BMD HDMI` / UltraStudio: 3840×2160・`bits=10`・`ColorSpace=12`）の
+   index を確認。デバイスはその出力を持つアダプタ上に作るので `QT_D3D_ADAPTER_INDEX` は不要。
+3. 表示＋取り込み＋PresentMon（管理者シェル。§6）は英語側の手順 3 のコマンドどおり。ログに
+   `back buffer vs source — 0 of 2160 rows differ`、末尾に `0 with mismatches`（終了コード 0。3 は不一致あり）。
+   `--mode scrgb`（nit/80 の IEEE half を同じ経路で転写）も対照として取る。
+4. 集計は `tools/ramp_report.py`（英語側の手順 4）。バックバッファ CSV は 2 コード飛び 0・段幅 {4,5}・欠落 0 で
+   なければならない（格納コードの証明）。
+5. 判定: このツールのランプは `code(x) = round(x·846/3839)`（全コード 0..846 が 1 回ずつ・4〜5 px）で proto のランプ
+   とは違うので、比較は **欠落コード一覧**（`m25_summary.json` の 49 個と同じ位置か）で行い、画素単位では比べない。
+   飛びが残る → アプリ側説は消え、NVIDIA へ正式報告へ。飛びが消える → Qt 経路の符号化が原因。先に直す。
+6. 補足: `--windowed` はスモーク用、`--metadata` で ST.2086 メタデータを付ける（既定は無し）。2026‑09‑11 の
+   スモーク（ROG・RTX 5090 上の PA32UCDM・60 Hz）: 全画面 3840×2160・色空間サポート 0x3・読み戻し 11/11 ビット一致。
+   この日は DeckLink が未接続だったため、手順 3 の取り込みは未実施。

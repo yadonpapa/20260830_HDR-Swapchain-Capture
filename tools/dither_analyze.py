@@ -7,8 +7,13 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pq import _pq_oetf  # noqa: E402
 
 
 def analyze(path: str, row: int) -> None:
@@ -41,8 +46,10 @@ def analyze(path: str, row: int) -> None:
     # フレーム平均（時間軸ディザがあれば非整数）
     m = g.mean(0)
     print(f"  フレーム平均の非整数度={np.abs(m - np.rint(m)).mean():.5f}")
-    # 期待との比較: ランプは PQ コードが x に比例（0 → code(2000nit)=0.7518）
-    pq_max = 0.7518
+    # 期待との比較: ランプは PQ コードが x に比例（0 → code(2000 nit) = 0.8274 = 846.5/1023）。
+    # 2026-09-11 修正: 以前の定数 0.7518 は 1000 nit の PQ 値で、期待コードが 10% 小さく出ていた
+    # （段幅・飛び数・単調性の指標には無関係。docs/hdr-swapchain-adversarial-review-20260911.md 攻撃 6）。
+    pq_max = float(_pq_oetf(np.array(2000.0 / 10000.0)))
     exp_code = np.rint(np.linspace(0, pq_max, rw) * 1023).astype(int)
     err = first - exp_code
     print(f"  期待コード（線形ランプ・4K に等倍拡大想定）との差: mean={err.mean():+.2f} std={err.std():.2f} "

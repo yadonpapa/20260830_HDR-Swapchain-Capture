@@ -328,6 +328,7 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 - 投稿先: https://bugreports.qt.io/browse/QTBUG-149927 （= https://qt-project.atlassian.net/browse/QTBUG-149927）
   → ページ最下部の「Comment」欄（キーボード `m` でも開く）に貼り付けて「Save」。
 - **2026-09-25 にチケットへコメントとして投稿済み**（以下は投稿文の控え）。
+- **注意（同日判明）**: Jira Cloud の自動リンク化（smart-link）は URL 直後のカンマ・閉じ括弧まで URL に取り込む（`…Capture,` になり 404）。投稿時は URL を行末か単独行に置き、直後に句読点を付けない。初回投稿はカンマ付きになったため、末尾の文を上の形（ファイル直リンク・単独行）に編集して修正した。
 - 目的: 変種 1（高 DPI）の再現条件を「300%」から「原点 × (dpr−1) が画面の半分を超える配置」へ精密化し、
   150% でも再現する実測を添える（「300% 環境が無いので再現しない」を防ぐ）。修正案も具体化。
 
@@ -366,7 +367,8 @@ or simply use MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) and compare with
 
 Workaround used in my application meanwhile (in case it helps others): replicate the same formula before creating the QQuickWindow and, only if the probe point falls outside the target screen, temporarily lower that screen's Windows scale to the largest value that passes (150% -> 125% here), restoring it when the window closes. QT_ENABLE_HIGHDPI_SCALING=0 works too but sizes every widget by the primary screen's scale, which is unusable on mixed-DPI setups.
 
-A short PyQt6 script that prints the table above for any layout is in the public repository (https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture, tools/qt_hdr_probe.py), next to the original reproducer.
+A short PyQt6 script that prints the table above for any layout is in the public repository, next to the original reproducer:
+https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture/blob/main/tools/qt_hdr_probe.py
 ```
 
 ## 3. ffmpeg
@@ -655,6 +657,7 @@ QT_ENABLE_HIGHDPI_SCALING=0（dpr = 1、ずれ無し）では DISPLAY6 上の同
 
 それまでの当方アプリ側の回避策（参考まで）: QQuickWindow を作る前に同じ式を再現し、判定点が対象画面の外に落ちるときだけ、その画面の Windows 拡大率を「通る最大の値」（ここでは 150% → 125%）へ一時的に下げ、ウィンドウを閉じるときに戻す。QT_ENABLE_HIGHDPI_SCALING=0 でも動くが、全ウィジェットが主画面の拡大率で描かれるため混在 DPI 環境では使えない。
 
-任意の配置で上の表を出力する短い PyQt6 スクリプトは、元の再現コードと同じ公開リポジトリ（https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture の tools/qt_hdr_probe.py）にあります。
+任意の配置で上の表を出力する短い PyQt6 スクリプトは、元の再現コードと同じ公開リポジトリにあります:
+https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture/blob/main/tools/qt_hdr_probe.py
 ```
 

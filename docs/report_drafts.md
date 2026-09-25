@@ -323,6 +323,52 @@ capture evidence are public at https://github.com/yadonpapa/20260830_HDR-Swapcha
 
 ---
 
+## 2b. Qt バグトラッカーへの追記コメント（2026-09-25・変種 1 の再現条件の精密化・**投稿済み 2026-09-25**）
+
+- 投稿先: https://bugreports.qt.io/browse/QTBUG-149927 （= https://qt-project.atlassian.net/browse/QTBUG-149927）
+  → ページ最下部の「Comment」欄（キーボード `m` でも開く）に貼り付けて「Save」。
+- **2026-09-25 にチケットへコメントとして投稿済み**（以下は投稿文の控え）。
+- 目的: 変種 1（高 DPI）の再現条件を「300%」から「原点 × (dpr−1) が画面の半分を超える配置」へ精密化し、
+  150% でも再現する実測を添える（「300% 環境が無いので再現しない」を防ぐ）。修正案も具体化。
+
+```text
+Follow-up on variant 1 (high-DPI): the reproduction condition is the screen *placement*, not the 300% scale factor. It reproduces at 150%.
+
+I re-measured on the same machine (Qt 6.11.1 via PyQt6 6.11.0, Windows 11 26200, RTX 5090 Laptop, driver 616.92) after rearranging the monitors. The 4K HDR screen (\\.\DISPLAY6) is now at Windows scale 150% and it still gets "Requested a scRGB swapchain but it is reported to be unsupported ..." -> SDR. DXGI reports that output as ColorSpace 12 / 10 bpc on adapter 0, which is the adapter QRhi picks ("using this adapter"), so this is not the adapter variant.
+
+Exact mechanism, verified against QDxgiHdrInfo::output6ForWindow (src/gui/rhi/qdxgihdrinfo.cpp):
+
+    QRect wr = w->geometry();
+    wr = QRect(wr.topLeft() * dpr, wr.size() * dpr);
+    center = wr.center();   // compared with DXGI_OUTPUT_DESC::DesktopCoordinates (physical px)
+
+On Windows the logical geometry that QScreen/QWindow report keeps the screen's *native* origin (only the size is divided by the scale factor). Multiplying that origin by dpr again therefore shifts the probe point by origin * (dpr - 1). As soon as that shift exceeds half of the screen's physical size the point falls outside every output rect and the check fails. Consequences:
+- the primary screen (origin 0,0) and any 100% screen always pass, whatever their scale;
+- any screen scaled above 100% fails once it is placed far enough from the origin - for a 3840x2160 screen at 150% that is |x0| >= 3840 or |y0| >= 2160.
+
+Measured values (QScreen::geometry() * devicePixelRatio, versus the physical monitor rects from EnumDisplayMonitors in the same per-monitor-DPI-aware process):
+
+  screen                 logical origin  dpr   Qt probe center   physical rect                     result
+  DISPLAY6 4K HDR 150%   (-715,-3240)    1.5   (846,-3780)       (-715,-3240)-(3124,-1081)         outside -> SDR fallback
+  DISPLAY1 panel 150%    (3125,-2040)    1.5   (5968,-2260)      (3125,-2040)-(5684,-441)          outside -> SDR fallback
+  DISPLAY7 primary 150%  (0,0)           1.5   (1127,752)        (0,0)-(2255,1503)                 inside
+  DISPLAY5 FHD 100%      (1205,-1080)    1.0   (2164,-540)       (1205,-1080)-(3124,-1)            inside
+
+With QT_ENABLE_HIGHDPI_SCALING=0 (dpr = 1, no shift) the same window on DISPLAY6 logs "Creating scRGB swapchain" and "HDR output info: ... maxLuminance=1015.27 ... SDR white level=204", i.e. the hardware path is fine.
+
+This also explains why my original report said "300%": with the earlier layout the shift only exceeded half the screen at 225-300%. The scale factor by itself is irrelevant.
+
+Suggested fix: map the window rect to native pixels with the proper high-DPI conversion instead of scaling the logical rect by dpr, e.g.
+
+    const QRect wr = QHighDpi::toNativePixels(w->geometry(), w);   // or QWindowPrivate / QPlatformWindow::geometry()
+
+or simply use MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) and compare with DXGI_OUTPUT_DESC::Monitor, which needs no coordinate conversion at all. Either would also make the check independent of the app's DPI-awareness settings.
+
+Workaround used in my application meanwhile (in case it helps others): replicate the same formula before creating the QQuickWindow and, only if the probe point falls outside the target screen, temporarily lower that screen's Windows scale to the largest value that passes (150% -> 125% here), restoring it when the window closes. QT_ENABLE_HIGHDPI_SCALING=0 works too but sizes every widget by the primary screen's scale, which is unusable on mixed-DPI setups.
+
+A short PyQt6 script that prints the table above for any layout is in the public repository (https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture, tools/qt_hdr_probe.py), next to the original reproducer.
+```
+
 ## 3. ffmpeg
 
 新規性のある報告は無し（swscale の端点誤差は Trac #979/#3801/#3785/#4805 で既知。7.1 の出力側色オプションによる
@@ -569,3 +615,46 @@ src/gui/rhi/qdxgihdrinfo.cpp）:
 再現コード（PyQt6 のテストパターン表示 --mode scrgb|hdr10 / --screen）、DXGI 出力ダンプツール、取り込みの証拠は
 https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture で公開しています（tools/proto_hdr_view.py、tools/dxgi_outputs.cpp、docs/RESULTS.md §4）。
 ```
+
+### 4.2b Qt 追記コメントの日本語版（記録用・2026-09-25・投稿済み）
+
+投稿文（§2b）の全文対訳:
+
+```text
+変種 1（高 DPI）の続報: 再現条件は画面の「配置」であって 300% という拡大率ではありません。150% でも再現します。
+
+モニタ配置を変えたあと同じマシン（Qt 6.11.1／PyQt6 6.11.0、Windows 11 26200、RTX 5090 Laptop、ドライバ 616.92）で再計測しました。4K HDR 画面（\\.\DISPLAY6）は今は Windows 拡大率 150% ですが、それでも「Requested a scRGB swapchain but it is reported to be unsupported ...」→ SDR になります。DXGI はこの出力を ColorSpace 12／10 bpc、アダプタ 0 と報告しており、QRhi が選ぶアダプタ（"using this adapter"）も同じなので、アダプタ変種ではありません。
+
+QDxgiHdrInfo::output6ForWindow（src/gui/rhi/qdxgihdrinfo.cpp）と突き合わせた正確な機序:
+
+    QRect wr = w->geometry();
+    wr = QRect(wr.topLeft() * dpr, wr.size() * dpr);
+    center = wr.center();   // DXGI_OUTPUT_DESC::DesktopCoordinates（物理 px）と比較
+
+Windows では QScreen/QWindow が返す論理 geometry は画面の「ネイティブ」原点をそのまま持ち（サイズだけ拡大率で割られる）ます。その原点をもう一度 dpr 倍するため、判定点は 原点 × (dpr − 1) だけずれます。このずれが画面物理サイズの半分を超えた時点で、点はどの出力矩形にも入らず判定が失敗します。帰結:
+- 主画面（原点 0,0）と 100% の画面は拡大率にかかわらず常に通る
+- 100% より大きい拡大率の画面は、原点から十分離れた位置に置かれた時点で失敗する ― 3840x2160 の 150% なら |x0| ≥ 3840 または |y0| ≥ 2160
+
+実測値（QScreen::geometry() × devicePixelRatio と、同じ per-monitor DPI aware プロセスで EnumDisplayMonitors から得た物理矩形の比較）:
+
+  画面                   論理原点        dpr   Qt の判定点        物理矩形                            結果
+  DISPLAY6 4K HDR 150%   (-715,-3240)    1.5   (846,-3780)       (-715,-3240)-(3124,-1081)         外 → SDR フォールバック
+  DISPLAY1 内蔵 150%     (3125,-2040)    1.5   (5968,-2260)      (3125,-2040)-(5684,-441)          外 → SDR フォールバック
+  DISPLAY7 主画面 150%   (0,0)           1.5   (1127,752)        (0,0)-(2255,1503)                 内
+  DISPLAY5 FHD 100%      (1205,-1080)    1.0   (2164,-540)       (1205,-1080)-(3124,-1)            内
+
+QT_ENABLE_HIGHDPI_SCALING=0（dpr = 1、ずれ無し）では DISPLAY6 上の同じウィンドウが「Creating scRGB swapchain」「HDR output info: ... maxLuminance=1015.27 ... SDR white level=204」を出します。つまりハードウェア経路は正常です。
+
+これは最初の報告で「300%」と書いた理由の説明にもなります。当時の配置では、ずれが画面の半分を超えるのが 225〜300% だっただけで、拡大率そのものは無関係でした。
+
+修正案: 論理矩形を dpr 倍するのではなく、正規の高 DPI 変換でウィンドウ矩形をネイティブ画素へ写像する。例:
+
+    const QRect wr = QHighDpi::toNativePixels(w->geometry(), w);   // または QWindowPrivate / QPlatformWindow::geometry()
+
+あるいは単に MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) を DXGI_OUTPUT_DESC::Monitor と比較すれば座標変換自体が不要です。どちらでもアプリの DPI 認識設定に依存しない判定になります。
+
+それまでの当方アプリ側の回避策（参考まで）: QQuickWindow を作る前に同じ式を再現し、判定点が対象画面の外に落ちるときだけ、その画面の Windows 拡大率を「通る最大の値」（ここでは 150% → 125%）へ一時的に下げ、ウィンドウを閉じるときに戻す。QT_ENABLE_HIGHDPI_SCALING=0 でも動くが、全ウィジェットが主画面の拡大率で描かれるため混在 DPI 環境では使えない。
+
+任意の配置で上の表を出力する短い PyQt6 スクリプトは、元の再現コードと同じ公開リポジトリ（https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture の tools/qt_hdr_probe.py）にあります。
+```
+

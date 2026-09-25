@@ -73,6 +73,7 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `tools/dither_analyze.py` | Step‑width / monotonicity / temporal statistics of the ramp row |
 | `tools/make_ramp_y4m.py` | Synthetic 10‑bit limited‑range YCbCr ramp video (replaces the private test clip) |
 | `tools/dxgi_outputs.cpp` | Dump DXGI adapters/outputs with `ColorSpace`, bits, luminance — proves what Windows thinks the output is |
+| `tools/qt_hdr_probe.py` | Prints, for every screen, the probe centre Qt 6.11 uses for its HDR-capability check (logical origin × dpr) next to the real physical rect — shows why a >100% screen placed far from the origin silently falls back to SDR (QTBUG-149927 variant 1, follow-up 2026-09-25) |
 | `tools/hdr_display.py`, `tools/pq.py` | Windows Advanced‑Color probe (ctypes) and PQ/sRGB curves |
 | `tools/hdr10_direct.cpp` | **Experiment A** (2026‑09‑11, `docs/hdr-swapchain-adversarial-review-20260911.md`): CPU‑generated *integer* PQ codes copied into an R10G10B10A2 (or FP16) flip‑model swapchain with `CopyResource` — no shader, no filtering, no float→UNORM stage; reads the back buffer back before every N‑th Present and proves it bit‑identical to the source (`--readback` CSV of the ramp row). Rules the application‑side encoding in or out. PROCEDURE.md §9 |
 | `tools/ramp_report.py` | Ramp‑row report from a capture `.npz` or a CSV: step widths, 2‑code jumps, skipped codes, spatial/temporal dither indicators, expected‑code and reference comparison, PresentMon present‑mode histogram → `data/`‑style CSV + `*_summary.json` entry |

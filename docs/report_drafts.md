@@ -256,7 +256,8 @@ This adds to my generation control (addendum 2, RTX 3070 = 8-bit lattice + dithe
 Setup
 - GeForce RTX 3070 (desktop), driver 616.56, Windows 11 Pro 26200. Fullscreen Qt Quick viewer (Qt 6.11.0),
   FP16 scRGB swapchain or R10G10B10A2 HDR10 swapchain. Pattern: achromatic near-black ramp (SDR gamma 2.2 code
-  0 ... 0.05, top about 200 nit -> PQ code 96), 3840 px wide. This is an application ramp, not the test pattern of
+  0 ... 0.05, top about 200 nit -> PQ code 96), 3840 px wide on screen (16-bit source image, most probably
+  1920 px wide, magnified x2 with bilinear filtering). This is an application ramp, not the test pattern of
   my earlier posts.
 - Capture: Blackmagic DeckLink 8K Pro G2 HDMI input, uncompressed 10-bit RGB (r210), 60 frames. Signal in every
   capture: 3840x2160 @ 23.976, RGB 4:4:4 10 bpc, HDR InfoFrame EOTF = PQ.
@@ -615,7 +616,7 @@ scRGB 経路が DP→HDMI 変換器を通してもバイト単位で正確だっ
 
 - 世代切り分け（追補 2、RTX 3070 = 10bit リンク上の 8bit 格子 + ディザ）への補足。
 - 構成: RTX 3070・ドライバ 616.56・Qt Quick の全画面ビューワ（Qt 6.11.0）・近黒の無彩色ランプ（SDR γ2.2 の符号
-  0〜0.05、上端は約 200 nit = PQ 符号 96）。これはアプリのランプで、以前の投稿のテストパターンではない。
+  0〜0.05、上端は約 200 nit = PQ 符号 96。元の画像は 16bit でおそらく幅 1920 px、バイリニアで 2 倍に拡大）。これはアプリのランプで、以前の投稿のテストパターンではない。
   取り込みは DeckLink 8K Pro G2 の HDMI 入力、60 フレーム、信号は 2160p23.976 RGB 4:4:4 10bpc PQ。
 - 接続は 2 通り: (D) GPU → キャプチャカード直結（追補 2 と同じ）、(H) GPU → HDFury Integral 2（分配）→
   基準モニターとキャプチャカード。

@@ -5,7 +5,7 @@
     "driver": "616.56 (nvidia-smi); the 2026-09-04 control used 610.62",
     "os": "Windows 11 Pro 26200",
     "source": "fullscreen HDR viewer of a Qt Quick application (PyQt6 6.11.0 / Qt 6.11.0, QSG_RHI_HDR=scrgb|hdr10, FP16 image handed to Qt), not the proto pattern of this repository",
-    "pattern": "achromatic horizontal ramp, SDR gamma 2.2 code 0 ... 0.05 across 3840 px, uniform along y; the code 1.0 luminance of the application was not recorded (about 200 nit inferred from the top code 96)",
+    "pattern": "achromatic horizontal ramp, SDR gamma 2.2 code 0 ... 0.05, uniform along y, covering the 3840 px of the screen; source image a 16-bit PNG, most probably 1920x1080 (the generator's setting when checked afterwards, not recorded at capture time), magnified x2 by the viewer with bilinear filtering; the code 1.0 luminance of the application was not recorded (about 200 nit inferred from the top code 96)",
     "capture": "Blackmagic DeckLink 8K Pro G2 (PCIe) HDMI input, r210, 60 frames after 10 skipped",
     "signal": "2160p23.98 RGB 4:4:4 10 bit, HDR InfoFrame eotf=PQ (DeckLink detection, identical for all four captures)",
     "paths": {

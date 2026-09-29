@@ -362,8 +362,11 @@ variants (`data/osaka3070nb_*`, `data/osaka3070nb_summary.json`, report tool `to
 * NVIDIA GeForce RTX 3070 (the section 7 machine), driver **616.56** (section 7: 610.62), Windows 11 Pro 26200
 * Source: the fullscreen HDR viewer of a Qt Quick application (PyQt6 / Qt 6.11.0, `QSG_RHI_HDR=scrgb|hdr10`, the
   application hands an FP16 image to Qt) - **not** the proto pattern of this repository. Pattern: achromatic
-  horizontal ramp, SDR gamma 2.2 code 0 ... 0.05 across 3840 px, uniform along y. The luminance of code 1.0 was not
-  recorded (about 200 nit, inferred from the top code 96).
+  horizontal ramp, SDR gamma 2.2 code 0 ... 0.05, uniform along y, covering the 3840 px of the screen. The source
+  image was a 16-bit PNG, **most probably 1920 x 1080** (the generator's setting when checked afterwards; not
+  recorded at capture time), which the viewer magnifies x2 with **bilinear filtering** - the same kind of source as
+  the proto pattern (1920 texels, bilinear x2). The luminance of code 1.0 was not recorded (about 200 nit,
+  inferred from the top code 96).
 * Capture: DeckLink 8K Pro G2 HDMI input, r210, 60 frames. Detected signal in all four captures:
   `2160p23.98 RGB444+10bit hdr_present=1 eotf=2`
 * **Path H**: GPU HDMI -> **HDFury Integral 2** (used as a splitter) -> Sony BVM-HX310 + DeckLink. Windows display name
@@ -372,7 +375,7 @@ variants (`data/osaka3070nb_*`, `data/osaka3070nb_summary.json`, report tool `to
 * Presentation path: the application's PresentMon-based indicator showed Independent Flip for every capture (read
   by the operator). **No PresentMon log was recorded** - weaker evidence than sections 6 to 9.
 
-### Results (frame row 1080, 3840 px, 60 frames)
+### Results (frame row 1080, 3840 px on the wire, 60 frames)
 
 | | H: scRGB | H: HDR10 | D: scRGB | D: HDR10 |
 |---|---|---|---|---|
@@ -427,7 +430,9 @@ The source was not read back from the swapchain, so this is a computation, not a
 * きっかけ: HDFury Integral 2 経由の基準モニター（Sony BVM-HX310）で、近黒の無彩色ランプの漸増性が、HDR10 より scRGB の
   ほうが良く見えた。§7 では RTX 3070 の 2 つのスワップチェーンは同じ振る舞いだったので、両方の接続で取り込んだ。
 * 環境: RTX 3070（§7 の機体）・ドライバ 616.56・Qt Quick アプリの HDR ビューワ（Qt 6.11.0。本リポジトリの proto
-  パターンではない）・SDR γ2.2 の符号 0〜0.05 の横ランプ・DeckLink 8K Pro G2・60 フレーム・信号は 4 条件とも
+  パターンではない）・SDR γ2.2 の符号 0〜0.05 の横ランプ（元の画像は 16bit PNG で、**おそらく 1920×1080**。
+  計測後に確かめた生成側の設定で、取り込みの時点では記録していない。ビューワが**バイリニア**で 2 倍に拡大して
+  3840 px に表示する。proto パターン = 1920 テクセル・バイリニア 2 倍と同じ種類の信号源）・DeckLink 8K Pro G2・60 フレーム・信号は 4 条件とも
   2160p23.98 RGB444 10bit PQ。**経路 H** = GPU → Integral 2（分配）→ BVM-HX310 と DeckLink、**経路 D** = GPU → DeckLink 直結。
   提示経路はアプリの表示（PresentMon 利用）を目視で確認しただけで、**PresentMon のログは取っていない**。
 * 経路 D（直結）: §7 を再現。両スワップチェーンとも全符号が 4 の倍数で、80〜96 % の標本が毎フレーム ±4 で揺れる。

@@ -35,7 +35,8 @@ device, monitor.
 
 * Splitter configuration: EDID mode (which EDID the GPU reads), scaling, HDCP state of input and outputs
 * A **PresentMon log** recorded concurrently with every capture (`tools/ramp_report.py --presentmon` reads it)
-* The luminance of code 1.0 set in the application, if an application ramp is used
+* The luminance of code 1.0 set in the application, and the size and bit depth of the source image, if an
+  application ramp is used (section 10: size not recorded at capture time, most probably 1920 x 1080)
 * NVIDIA Control Panel output settings of the captured display (colour format, depth, range, scaling)
 * The EDID of the sink as the GPU sees it (monitor name and HDR state from `tools/proto_hdr_view.py --list`,
   `tools/dxgi_outputs.cpp`)
@@ -100,7 +101,8 @@ RTX 3070 の近黒ランプの計測（`docs/RESULTS.md` §10）のあとに残�
 
 * 分配器の設定: EDID のモード（GPU がどの EDID を読むか）・スケーリング・入出力の HDCP の状態
 * 取り込みと同時刻の **PresentMon のログ**
-* アプリのランプを使うなら、アプリで設定した「符号 1.0 の輝度」
+* アプリのランプを使うなら、アプリで設定した「符号 1.0 の輝度」と、元の画像の大きさ・ビット深度
+  （§10 は取り込みの時点で大きさを記録していない。おそらく 1920×1080）
 * 取り込む画面の NVIDIA コントロールパネルの出力設定（色形式・深度・レンジ・スケーリング）
 * GPU から見た接続先の EDID（モニター名と HDR の状態）
 

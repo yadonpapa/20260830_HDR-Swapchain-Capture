@@ -241,6 +241,63 @@ Conclusion
   https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture (docs/RESULTS.md section 9)
 ```
 
+## 1f. NVIDIA フォーラムへの追補 5（2026-09-29・RTX 3070 の近黒ランプと接続経路・**未投稿**）
+
+- §1c（世代切り分け・RTX 3070）への補足。RTX 3070 の出力が接続先の経路で変わること、Integral 2 経由では HDR10 の
+  近黒で 10 符号が出ないこと。データ `data/osaka3070nb_*`、詳細 `docs/RESULTS.md` §10。
+- 投稿前に確認すること: (1) Integral 2 の設定（EDID モード・スケーリング）を記録して本文に足す、(2) できれば
+  PresentMon のログを取り直す、(3) 基準モニターの型番の表記（EDID 名は BVM-HX310）。
+
+```text
+Subject: Addendum 5 - RTX 3070: dither depends on the sink path; without dither the R10G10B10A2 swapchain loses 10 near-black codes that FP16 keeps
+
+This adds to my generation control (addendum 2, RTX 3070 = 8-bit lattice + dither on a 10-bit link).
+
+Setup
+- GeForce RTX 3070 (desktop), driver 616.56, Windows 11 Pro 26200. Fullscreen Qt Quick viewer (Qt 6.11.0),
+  FP16 scRGB swapchain or R10G10B10A2 HDR10 swapchain. Pattern: achromatic near-black ramp (SDR gamma 2.2 code
+  0 ... 0.05, top about 200 nit -> PQ code 96), 3840 px wide. This is an application ramp, not the test pattern of
+  my earlier posts.
+- Capture: Blackmagic DeckLink 8K Pro G2 HDMI input, uncompressed 10-bit RGB (r210), 60 frames. Signal in every
+  capture: 3840x2160 @ 23.976, RGB 4:4:4 10 bpc, HDR InfoFrame EOTF = PQ.
+- Two connections: (D) GPU HDMI straight into the capture card, as in addendum 2. (H) GPU HDMI -> HDFury
+  Integral 2 (splitter) -> reference monitor + capture card.
+- The application's PresentMon-based indicator showed Independent Flip in all four cases. I did not record a
+  PresentMon log this time.
+
+Result (one frame row, 60 frames)
+|                                   | H: FP16    | H: R10G10B10A2            | D: FP16          | D: R10G10B10A2   |
+|-----------------------------------|------------|---------------------------|------------------|------------------|
+| samples changing between frames   | 0          | 0                         | 96 % (by 4)      | 80 % (by 4)      |
+| codes that are multiples of 4     | 26 %       | 27 %                      | 100 %            | 100 %            |
+| codes present in 0..96            | all 97     | 87                        | lattice of 4     | lattice of 4     |
+| skipped codes                     | none       | 1 4 8 16 37 45 49 51 54 58| -                | -                |
+| 60-frame average vs H: FP16       | reference  | -2 ... +1 code            | within 0.6 code  | within 1.1 code  |
+| spacing of neighbouring codes     | 1          | 0 ... 2                   | 0.91 ... 1.03    | 0.94 ... 1.11    |
+
+Observations
+- Connected directly, the RTX 3070 behaves as in addendum 2 (newer driver, same result): 8-bit lattice plus
+  random spatio-temporal dither for both swapchains, and the time average is correct to within one code.
+- Behind the Integral 2 the same GPU outputs plain 10-bit codes with no dither at all (0 of 3840 x 2160 x 3
+  samples changed over 60 frames). So whether this GPU dithers depends on the sink side of the link. I have
+  not determined which property decides it (the EDID the GPU reads, the link mode, a per-display setting).
+- Without the dither, the R10G10B10A2 swapchain loses 10 near-black codes while the FP16 swapchain shows every
+  code. The list is identical to the near-black skips I reported for the FP16 control of the direct-write test
+  on Blackwell (addendum 4: 1, 4, 8, 16, 37, 45, 49, 51, 54, 58, ...). That looks like the same exit stage -
+  a linear -> PQ re-encode that is exact to +-1 code near black - now applied to the discrete 10-bit codes of
+  the R10G10B10A2 surface. This is an inference from the matching list; I did not read the back buffer back in
+  this measurement.
+- On a reference monitor fed through the Integral 2 the difference is visible: the near-black ramp increases
+  more evenly with the FP16 swapchain.
+
+Question
+- Is the R10G10B10A2 HDR10 surface expected to pass through a PQ -> linear -> PQ stage on scanout (Independent
+  Flip) on Ampere? And which sink property switches the output dither of the RTX 3070 on and off?
+
+Data and the report script: https://github.com/yadonpapa/20260830_HDR-Swapchain-Capture
+(docs/RESULTS.md section 10, data/osaka3070nb_*, tools/nearblack_report.py)
+```
+
 ## 2. Qt バグトラッカー（新規 issue・**投稿済み 2026-09-04: [QTBUG-149927](https://bugreports.qt.io/browse/QTBUG-149927)**）
 
 - 報告先: https://bugreports.qt.io/ （= https://qt-project.atlassian.net/ へリダイレクト）→ 「作成」→
@@ -550,6 +607,31 @@ scRGB 経路が DP→HDMI 変換器を通してもバイト単位で正確だっ
 - 結論: 量子化は R10G10B10A2 スワップチェーンとリンクの間、直接スキャンアウト（Independent Flip）経路にある。アプリでも
   Qt でも取り込み系でもない（同一経路の FP16 対照は ±1 以内）。約 16 コード周期は 10bit 面にスキャンアウト時に掛かる
   区分線形 LUT の境界に見える。再現に必要なものはすべてリポジトリ（単一ファイルの `hdr10_direct.cpp`・スクリプト・生データ）。
+
+### 4.1f NVIDIA フォーラム追補 5 の日本語版（記録用・2026-09-29・未投稿）
+
+件名: 追補 5 - RTX 3070: ディザの有無は接続先の経路で変わる。ディザが無いとき、R10G10B10A2 は近黒の 10 符号を
+失い、FP16 は失わない
+
+- 世代切り分け（追補 2、RTX 3070 = 10bit リンク上の 8bit 格子 + ディザ）への補足。
+- 構成: RTX 3070・ドライバ 616.56・Qt Quick の全画面ビューワ（Qt 6.11.0）・近黒の無彩色ランプ（SDR γ2.2 の符号
+  0〜0.05、上端は約 200 nit = PQ 符号 96）。これはアプリのランプで、以前の投稿のテストパターンではない。
+  取り込みは DeckLink 8K Pro G2 の HDMI 入力、60 フレーム、信号は 2160p23.976 RGB 4:4:4 10bpc PQ。
+- 接続は 2 通り: (D) GPU → キャプチャカード直結（追補 2 と同じ）、(H) GPU → HDFury Integral 2（分配）→
+  基準モニターとキャプチャカード。
+- 提示経路はアプリの表示（PresentMon 利用）で 4 条件とも Independent Flip。今回は PresentMon のログを取っていない。
+- 結果:
+  - 直結は追補 2 と同じ（新しいドライバでも同じ）。両スワップチェーンとも 8bit 格子 + ランダム時空間ディザで、
+    時間平均は 1 コード以内で正しい。
+  - Integral 2 の後ろでは、同じ GPU がディザの無い 10bit 符号を出す（60 フレームで変化した標本 0）。GPU が
+    ディザを掛けるかどうかは接続先で決まる。どの性質が決めているかは未特定。
+  - ディザが無いとき、R10G10B10A2 は近黒の 10 符号（1, 4, 8, 16, 37, 45, 49, 51, 54, 58）を失い、FP16 は全符号を出す。
+    この一覧は、Blackwell の直接書き込み試験（追補 4）の FP16 対照で報告した近黒の欠落と同じ。同じ出口段
+    （近黒で ±1 コード精度のリニア → PQ 再符号化）が、R10G10B10A2 の離散的な 10bit 符号に掛かっているように見える。
+    一覧の一致からの推論で、今回はバックバッファを読み戻していない。
+  - Integral 2 経由の基準モニターでは、近黒ランプの漸増性が FP16 のほうが良く見える。
+- 質問: Ampere では、R10G10B10A2 の HDR10 面がスキャンアウト（Independent Flip）で PQ → リニア → PQ を通るのが
+  想定された動作か。RTX 3070 の出力ディザを切り替える接続先の性質は何か。
 
 ### 4.2 Qt バグ報告の日本語版
 

@@ -55,6 +55,15 @@ bit‑identical**, every code 0..846 present) — and the wire is still missing 
 (HDMI direct, `Hardware: Independent Flip`), whose captured frames are bit‑identical to each other. The scRGB control through
 the same path is exact within ±1 code (no mid‑tone skip). The quantiser is between the swapchain and the link.
 
+**Near-black ramp on the RTX 3070, 2026-09-29** (`docs/RESULTS.md` section 10, `data/osaka3070nb_*`): whether the
+RTX 3070 dithers depends on the sink path. Connected **directly** to the DeckLink 8K Pro G2 it reproduces the
+generation control (8-bit lattice, +-4 dither on 80 ... 96 % of the samples, time average within one code of the
+reference for both swapchains). **Through an HDFury Integral 2** (splitter in front of a Sony BVM) the same GPU
+emits **plain 10-bit codes with no dither at all** - and then the **HDR10 swapchain loses 10 near-black codes
+(1, 4, 8, 16, 37, 45, 49, 51, 54, 58) while FP16 scRGB shows every code 0..96**. The list is exactly the near-black
+skip list of the scRGB control of Experiment A. Source was an application ramp (not the proto pattern), no
+PresentMon log, cause of the dither switch not determined - see the caveats in section 10.
+
 What the public record says about **RTX 40**, **driver branches** and **AMD Radeon** (and why AMD and RTX 40 are the next
 measurements worth taking) is collected in `docs/RESEARCH_NOTES.md`.
 
@@ -77,8 +86,9 @@ Qt bug (silent SDR fallback of the HDR swapchain, both variants):
 | `tools/hdr_display.py`, `tools/pq.py` | Windows Advanced‑Color probe (ctypes) and PQ/sRGB curves |
 | `tools/hdr10_direct.cpp` | **Experiment A** (2026‑09‑11, `docs/hdr-swapchain-adversarial-review-20260911.md`): CPU‑generated *integer* PQ codes copied into an R10G10B10A2 (or FP16) flip‑model swapchain with `CopyResource` — no shader, no filtering, no float→UNORM stage; reads the back buffer back before every N‑th Present and proves it bit‑identical to the source (`--readback` CSV of the ramp row). Rules the application‑side encoding in or out. PROCEDURE.md §9 |
 | `tools/ramp_report.py` | Ramp‑row report from a capture `.npz` or a CSV: step widths, 2‑code jumps, skipped codes, spatial/temporal dither indicators, expected‑code and reference comparison, PresentMon present‑mode histogram → `data/`‑style CSV + `*_summary.json` entry |
+| `tools/nearblack_report.py` | Report for captures that may carry temporal dither (2026-09-29): single-frame statistics, whole-frame temporal statistics, and the time + row average compared with a dither-free reference capture of the same ramp (per-code spacing) → `data/`-style CSV + `*_summary.json` entry |
 | `decklink_core/` | C++ DeckLink wrapper DLL (capture + playback). Needs the Blackmagic SDK, see its README |
-| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`); `a_*` / `a5090_*` = Experiment A (2026‑09‑11, integer codes via `CopyResource`, back buffer read back; RTX PRO 6000 / RTX 5090 Laptop; `a_summary.json` incl. the back‑buffer CSV reports and the PresentMon mode counts) |
+| `data/` | Captured ramp rows (CSV: x, R, G, B, per‑pixel min/max over frames), patch table, `summary.json`; `m25_*` = the 2026‑09‑04 PresentMon‑verified re‑measurement incl. the composition control (`m25_summary.json`); `osaka3070_*` = the RTX 3070 (Ampere) generation control incl. the 60‑frame time‑average column (`osaka3070_summary.json`); `rog6000_*` = the RTX PRO 6000 Blackwell (desktop Blackwell, DP 2.1 → CAC‑1088 → DeckLink) control, bit‑identical to `m25_*` (`rog6000_summary.json`); `a_*` / `a5090_*` = Experiment A (2026‑09‑11, integer codes via `CopyResource`, back buffer read back; RTX PRO 6000 / RTX 5090 Laptop; `a_summary.json` incl. the back‑buffer CSV reports and the PresentMon mode counts); `osaka3070nb_*` = the 2026-09-29 near-black ramp on the RTX 3070, direct and through an HDFury Integral 2, both swapchains (`osaka3070nb_summary.json`; CSV with the time average and the time + row average) |
 | `docs/PROCEDURE.md` | Step‑by‑step setup and measurement procedure (EN / 日本語) |
 | `docs/RESULTS.md` | Full results, side findings, and the drafts posted to NVIDIA / Qt |
 | `docs/RESEARCH_NOTES.md` | Desk research (2026‑09‑04): what is publicly known about RTX 40 output depth/dither, NVIDIA driver branches (Game Ready / Studio / Enterprise) and AMD Radeon drivers & dithering, plus a fact‑check (§D) of generative‑AI answers claiming Radeon / exclusive fullscreen / madVR would give bit‑exact HDR10 under Independent Flip — with implications for the next measurements (EN summary + full JA notes) |
@@ -150,6 +160,14 @@ Present 直前に読み戻して**80/80 ビット一致**（全コード 0..846 
 `Hardware Composed: Independent Flip`、**RTX 5090 Laptop**＝HDMI 直結・`Hardware: Independent Flip`。両者の取り込みフレームは
 ビット一致）。
 同経路の scRGB 対照は ±1 コード以内（中間調の欠落ゼロ）。量子化はスワップチェーンとリンクの間にある。
+
+**近黒ランプ・RTX 3070（2026-09-29）**（`docs/RESULTS.md` §10・`data/osaka3070nb_*`）: RTX 3070 がディザを掛けるか
+どうかは接続先の経路で変わる。DeckLink 8K Pro G2 へ**直結**すると世代切り分けの結果を再現する（8bit 格子・80〜96 % の
+標本が ±4 で揺れる・時間平均は両スワップチェーンとも基準に ±1 コード未満で一致）。**HDFury Integral 2 経由**（Sony BVM の
+手前の分配器）では、同じ GPU が**ディザの無い 10bit 符号**を出し、そのとき **HDR10 は近黒の 10 符号
+（1, 4, 8, 16, 37, 45, 49, 51, 54, 58）が出ず、FP16 scRGB は 0〜96 の全符号が出る**。この一覧は実験 A の scRGB 対照の
+近黒の欠落と同じ。信号源はアプリのランプ（proto パターンではない）、PresentMon のログ無し、ディザが切り替わる原因は
+未特定 — 留意点は §10。
 
 RTX 40 の出力挙動・NVIDIA ドライバ系統（Game Ready / Studio / Enterprise）・AMD Radeon のドライバと階調再現について
 公開情報を調べた結果（次に計測すべき対象の根拠）と、「Radeon／排他的フルスクリーン／madVR なら Bit-Exact になる」という生成 AI 回答の検証（§D）は `docs/RESEARCH_NOTES.md`。

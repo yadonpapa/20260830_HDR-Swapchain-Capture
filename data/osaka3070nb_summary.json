@@ -1,0 +1,486 @@
+{
+  "environment": {
+    "date": "2026-09-29",
+    "gpu": "NVIDIA GeForce RTX 3070 (Ampere, desktop, single GPU) - the machine of the 2026-09-04 generation control",
+    "driver": "616.56 (nvidia-smi); the 2026-09-04 control used 610.62",
+    "os": "Windows 11 Pro 26200",
+    "source": "fullscreen HDR viewer of a Qt Quick application (PyQt6 6.11.0 / Qt 6.11.0, QSG_RHI_HDR=scrgb|hdr10, FP16 image handed to Qt), not the proto pattern of this repository",
+    "pattern": "achromatic horizontal ramp, SDR gamma 2.2 code 0 ... 0.05 across 3840 px, uniform along y; the code 1.0 luminance of the application was not recorded (about 200 nit inferred from the top code 96)",
+    "capture": "Blackmagic DeckLink 8K Pro G2 (PCIe) HDMI input, r210, 60 frames after 10 skipped",
+    "signal": "2160p23.98 RGB 4:4:4 10 bit, HDR InfoFrame eotf=PQ (DeckLink detection, identical for all four captures)",
+    "paths": {
+      "hdfury": "GPU HDMI -> HDFury Integral 2 used as a splitter -> Sony BVM (EDID name BVM-HX310) and the DeckLink input. Windows showed the display as 'BVM-HX310', HDR on, SDR white 204 nit. Integral 2 settings (EDID mode, scaling, HDCP) were not recorded.",
+      "direct": "GPU HDMI -> DeckLink input directly (as on 2026-09-04). Windows showed the display as 'BMD HDMI', HDR on, SDR white 204 nit."
+    },
+    "path_verification": "the application's PresentMon-based indicator showed Independent Flip for all four captures (read by the operator); no PresentMon log was recorded",
+    "reference_for_time_averages": "osaka3070nb_hdfury_scrgb (dither-free, every code 0..96 present), aligned horizontally per capture",
+    "not_recorded": "NVIDIA Control Panel output settings per display, Integral 2 configuration, PresentMon CSV, back-buffer readback (the source codes are those of the application, not proven by readback)"
+  },
+  "captures": {
+    "osaka3070nb_hdfury_scrgb": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "frame_row": 1080,
+      "uniform_along_y": {
+        "same_as_row_at_quarter_height": true,
+        "max_abs_difference": 0
+      },
+      "single_frame": {
+        "code_range": [
+          0,
+          96
+        ],
+        "distinct_codes": 97,
+        "codes_multiple_of_4_fraction": 0.2596,
+        "adjacent_diff_histogram": {
+          "1": 96
+        },
+        "two_code_jumps": 0,
+        "non_monotonic_steps": 0,
+        "skipped_codes": [],
+        "step_width_px": {
+          "min": 33,
+          "median": 39.0,
+          "max": 48,
+          "sd": 3.85
+        },
+        "rgb_equal_fraction": 1.0
+      },
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.0,
+      "whole_frame_span_histogram": {
+        "0": 24883200
+      },
+      "time_mean_fractional_part_G_mean": 0.0
+    },
+    "osaka3070nb_hdfury_hdr10": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "frame_row": 1080,
+      "uniform_along_y": {
+        "same_as_row_at_quarter_height": true,
+        "max_abs_difference": 0
+      },
+      "single_frame": {
+        "code_range": [
+          0,
+          96
+        ],
+        "distinct_codes": 87,
+        "codes_multiple_of_4_fraction": 0.2719,
+        "adjacent_diff_histogram": {
+          "1": 76,
+          "2": 10
+        },
+        "two_code_jumps": 10,
+        "non_monotonic_steps": 0,
+        "skipped_codes": [
+          1,
+          4,
+          8,
+          16,
+          37,
+          45,
+          49,
+          51,
+          54,
+          58
+        ],
+        "step_width_px": {
+          "min": 34,
+          "median": 40.0,
+          "max": 82,
+          "sd": 11.62
+        },
+        "rgb_equal_fraction": 1.0
+      },
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.0,
+      "whole_frame_span_histogram": {
+        "0": 24883200
+      },
+      "time_mean_fractional_part_G_mean": 0.0,
+      "vs_reference": {
+        "reference": "osaka3070nb_hdfury_scrgb",
+        "horizontal_shift_px": -17,
+        "time_and_row_mean_minus_reference": {
+          "mean": -0.334,
+          "sd": 0.537,
+          "min": -2.0,
+          "max": 1.0
+        },
+        "mean_code_per_reference_code": {
+          "codes_evaluated": [
+            2,
+            94
+          ],
+          "step_between_neighbouring_codes": {
+            "min": 0.0,
+            "max": 2.0,
+            "sd": 0.41,
+            "ideal": 1.0
+          },
+          "steps_below_0.5_or_above_1.5": {
+            "4": 0.0,
+            "5": 1.9,
+            "8": 0.05,
+            "9": 1.94,
+            "11": 0.08,
+            "17": 1.94,
+            "18": 0.08,
+            "38": 2.0,
+            "41": 0.08,
+            "46": 2.0,
+            "49": 0.11,
+            "50": 1.89,
+            "51": 0.11,
+            "52": 1.89,
+            "53": 0.11,
+            "55": 1.89,
+            "58": 0.15,
+            "59": 1.93
+          }
+        }
+      }
+    },
+    "osaka3070nb_direct_scrgb": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "frame_row": 1080,
+      "uniform_along_y": {
+        "same_as_row_at_quarter_height": false,
+        "max_abs_difference": 4
+      },
+      "single_frame": {
+        "code_range": [
+          0,
+          100
+        ],
+        "distinct_codes": 26,
+        "codes_multiple_of_4_fraction": 1.0,
+        "adjacent_diff_histogram": {
+          "-4": 635,
+          "4": 659
+        },
+        "two_code_jumps": 0,
+        "non_monotonic_steps": 635,
+        "skipped_codes": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          9,
+          10,
+          11,
+          13,
+          14,
+          15,
+          17,
+          18,
+          19,
+          21,
+          22,
+          23,
+          25,
+          26,
+          27,
+          29,
+          30,
+          31,
+          33,
+          34,
+          35,
+          37,
+          38,
+          39,
+          41,
+          42,
+          43,
+          45,
+          46,
+          47,
+          49,
+          50,
+          51,
+          53,
+          54,
+          55,
+          57,
+          58,
+          59,
+          61,
+          62,
+          63,
+          65,
+          66,
+          67,
+          69,
+          70,
+          71,
+          73,
+          74,
+          75,
+          77,
+          78,
+          79,
+          81,
+          82,
+          83,
+          85,
+          86,
+          87,
+          89,
+          90,
+          91,
+          93,
+          94,
+          95,
+          97,
+          98,
+          99
+        ],
+        "step_width_px": {
+          "min": 1,
+          "median": 1.0,
+          "max": 55,
+          "sd": 4.98
+        },
+        "rgb_equal_fraction": 0.5052
+      },
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.9598,
+      "whole_frame_span_histogram": {
+        "0": 1001239,
+        "4": 23860049,
+        "8": 909,
+        "12": 898,
+        "16": 780,
+        "20": 781,
+        "24": 787,
+        "28": 788,
+        "32": 806,
+        "36": 801,
+        "40": 820,
+        "44": 845,
+        "48": 870,
+        "52": 704,
+        "56": 701,
+        "60": 721,
+        "64": 730,
+        "68": 744,
+        "72": 754,
+        "76": 772,
+        "80": 772,
+        "84": 804,
+        "88": 731,
+        "92": 721,
+        "96": 760,
+        "100": 179,
+        "104": 91,
+        "108": 92,
+        "112": 91,
+        "116": 82,
+        "120": 85,
+        "124": 83,
+        "128": 82,
+        "132": 81,
+        "136": 79,
+        "140": 79,
+        "144": 75,
+        "148": 75,
+        "152": 74,
+        "156": 73,
+        "160": 72,
+        "164": 70,
+        "168": 74,
+        "172": 67,
+        "176": 69,
+        "180": 71,
+        "184": 73,
+        "188": 76,
+        "192": 100,
+        "675": 12,
+        "679": 97,
+        "683": 88,
+        "687": 89,
+        "691": 91,
+        "695": 84,
+        "699": 85,
+        "703": 83,
+        "707": 82,
+        "711": 81,
+        "715": 79,
+        "719": 77,
+        "723": 78,
+        "727": 75,
+        "731": 74,
+        "735": 74,
+        "739": 72,
+        "743": 70,
+        "747": 71,
+        "751": 69,
+        "755": 72,
+        "759": 67,
+        "763": 72,
+        "767": 78,
+        "771": 100
+      },
+      "time_mean_fractional_part_G_mean": 0.2449,
+      "vs_reference": {
+        "reference": "osaka3070nb_hdfury_scrgb",
+        "horizontal_shift_px": -18,
+        "time_and_row_mean_minus_reference": {
+          "mean": 0.008,
+          "sd": 0.292,
+          "min": -0.574,
+          "max": 0.57
+        },
+        "mean_code_per_reference_code": {
+          "codes_evaluated": [
+            2,
+            94
+          ],
+          "step_between_neighbouring_codes": {
+            "min": 0.909,
+            "max": 1.031,
+            "sd": 0.019,
+            "ideal": 1.0
+          },
+          "steps_below_0.5_or_above_1.5": {}
+        }
+      }
+    },
+    "osaka3070nb_direct_hdr10": {
+      "capture_info": "2160p23.98 3840x2160 pixfmt=0x72323130 flags=RGB444+10bit hdr_present=1 eotf=2 MaxCLL=0 MaxFALL=0 DML=0..0",
+      "frames": 60,
+      "frame_row": 1080,
+      "uniform_along_y": {
+        "same_as_row_at_quarter_height": false,
+        "max_abs_difference": 4
+      },
+      "single_frame": {
+        "code_range": [
+          0,
+          96
+        ],
+        "distinct_codes": 25,
+        "codes_multiple_of_4_fraction": 1.0,
+        "adjacent_diff_histogram": {
+          "-4": 622,
+          "4": 646
+        },
+        "two_code_jumps": 0,
+        "non_monotonic_steps": 622,
+        "skipped_codes": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          9,
+          10,
+          11,
+          13,
+          14,
+          15,
+          17,
+          18,
+          19,
+          21,
+          22,
+          23,
+          25,
+          26,
+          27,
+          29,
+          30,
+          31,
+          33,
+          34,
+          35,
+          37,
+          38,
+          39,
+          41,
+          42,
+          43,
+          45,
+          46,
+          47,
+          49,
+          50,
+          51,
+          53,
+          54,
+          55,
+          57,
+          58,
+          59,
+          61,
+          62,
+          63,
+          65,
+          66,
+          67,
+          69,
+          70,
+          71,
+          73,
+          74,
+          75,
+          77,
+          78,
+          79,
+          81,
+          82,
+          83,
+          85,
+          86,
+          87,
+          89,
+          90,
+          91,
+          93,
+          94,
+          95
+        ],
+        "step_width_px": {
+          "min": 1,
+          "median": 1.0,
+          "max": 56,
+          "sd": 5.94
+        },
+        "rgb_equal_fraction": 0.5211
+      },
+      "whole_frame_channel_samples_varying_between_frames_fraction": 0.8016,
+      "whole_frame_span_histogram": {
+        "0": 4935611,
+        "4": 19947589
+      },
+      "time_mean_fractional_part_G_mean": 0.1406,
+      "vs_reference": {
+        "reference": "osaka3070nb_hdfury_scrgb",
+        "horizontal_shift_px": -19,
+        "time_and_row_mean_minus_reference": {
+          "mean": -0.03,
+          "sd": 0.184,
+          "min": -1.073,
+          "max": 1.012
+        },
+        "mean_code_per_reference_code": {
+          "codes_evaluated": [
+            2,
+            94
+          ],
+          "step_between_neighbouring_codes": {
+            "min": 0.936,
+            "max": 1.109,
+            "sd": 0.031,
+            "ideal": 1.0
+          },
+          "steps_below_0.5_or_above_1.5": {}
+        }
+      }
+    }
+  }
+}

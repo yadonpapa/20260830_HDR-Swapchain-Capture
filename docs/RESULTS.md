@@ -350,6 +350,108 @@ YCbCr 4:2:2 8 bpc — set 23.976 Hz first, then RGB 10 bpc). PROCEDURE.md §8 it
   DeckLink 4K Extreme 12G は TB5 ドック配下では PCI リソース未割当（0xC00000C0）、直結でもコード 43 を 2 回起こしたため
   UltraStudio 4K Mini を使用（PROCEDURE.md §8）。
 
+## 10. Near-black ramp on the RTX 3070 (2026-09-29): the output depends on the sink path - dither when connected directly, plain 10-bit codes through an HDFury Integral 2 - and the HDR10 swapchain then loses 10 near-black codes
+
+Trigger: on a reference monitor (Sony BVM) fed through an HDFury Integral 2, a near-black achromatic ramp looked
+smoother (more evenly increasing) with the FP16 scRGB swapchain than with the HDR10 swapchain - on the **RTX 3070**,
+where section 7 had found the two swapchains to behave identically. The signal was captured in both connection
+variants (`data/osaka3070nb_*`, `data/osaka3070nb_summary.json`, report tool `tools/nearblack_report.py`).
+
+### Environment
+
+* NVIDIA GeForce RTX 3070 (the section 7 machine), driver **616.56** (section 7: 610.62), Windows 11 Pro 26200
+* Source: the fullscreen HDR viewer of a Qt Quick application (PyQt6 / Qt 6.11.0, `QSG_RHI_HDR=scrgb|hdr10`, the
+  application hands an FP16 image to Qt) - **not** the proto pattern of this repository. Pattern: achromatic
+  horizontal ramp, SDR gamma 2.2 code 0 ... 0.05 across 3840 px, uniform along y. The luminance of code 1.0 was not
+  recorded (about 200 nit, inferred from the top code 96).
+* Capture: DeckLink 8K Pro G2 HDMI input, r210, 60 frames. Detected signal in all four captures:
+  `2160p23.98 RGB444+10bit hdr_present=1 eotf=2`
+* **Path H**: GPU HDMI -> **HDFury Integral 2** (used as a splitter) -> BVM + DeckLink. Windows display name
+  `BVM-HX310`, HDR on. **Path D**: GPU HDMI -> DeckLink directly (as in section 7). Windows display name `BMD HDMI`,
+  HDR on.
+* Presentation path: the application's PresentMon-based indicator showed Independent Flip for every capture (read
+  by the operator). **No PresentMon log was recorded** - weaker evidence than sections 6 to 9.
+
+### Results (frame row 1080, 3840 px, 60 frames)
+
+| | H: scRGB | H: HDR10 | D: scRGB | D: HDR10 |
+|---|---|---|---|---|
+| Channel samples that change between frames (whole frame) | **0** | **0** | 95.98 % (span 4) | 80.16 % (span 4) |
+| Codes that are multiples of 4 (single frame) | 26 % | 27 % | **100 %** | **100 %** |
+| Codes present in 0..96 (single frame) | **97 of 97** | **87** | 26 (lattice of 4) | 25 (lattice of 4) |
+| Skipped codes (single frame) | none | **1, 4, 8, 16, 37, 45, 49, 51, 54, 58** | - | - |
+| Two-code jumps / non-monotonic steps (single frame) | 0 / 0 | 10 / 0 | dither | dither |
+| Step widths (single frame) | 33 ... 48 px (sd 3.85) | 34 ... 82 px (sd 11.62) | dither | dither |
+| R = G = B | every pixel | every pixel | 51 % (independent dither) | 52 % |
+| Time + row average - reference (H: scRGB), codes | reference | mean -0.33, sd 0.54, -2.0 ... +1.0 | mean +0.01, sd 0.29, -0.57 ... +0.57 | mean -0.03, sd 0.18, -1.07 ... +1.01 |
+| Distance between neighbouring codes in that average (ideal 1.00) | - | **0.00 ... 2.00** (18 outliers) | 0.91 ... 1.03 | 0.94 ... 1.11 |
+
+Application side: for a synthetic ramp of the same shape, the values the application computes contain every code
+0..96 on both paths (rounded to 10 bit: no skipped code, no non-monotonic step; 2745 / 3633 distinct FP16 values).
+The source was not read back from the swapchain, so this is a computation, not a proof (compare section 9).
+
+### Interpretation
+
+1. **Path D reproduces section 7** on a newer driver: an 8-bit lattice with random spatio-temporal dither for both
+   swapchains, and a time average that follows the 10-bit reference to well within one code, with no skipped code.
+2. **Through the Integral 2 the same GPU emits plain 10-bit codes without any dither** (0 of 3840 x 2160 x 3 samples
+   changed in 60 frames). Whether the GPU dithers therefore depends on the sink side of the link, not on the GPU
+   generation alone. What exactly makes the difference (the EDID the GPU sees, the link mode, a setting that
+   Windows / the driver stores per display) was **not determined**; the Integral 2 configuration was not recorded.
+   A device in the path removing a random +-4 dither and restoring the exact 10-bit ramp is not a plausible
+   explanation of the scRGB result (every code, 1-code steps).
+3. On path H the **HDR10 swapchain loses 10 near-black codes, the scRGB swapchain none**. The skipped codes are
+   **exactly the near-black skips of the scRGB control of Experiment A** (section 9: 1, 4, 8, 16, 37, 45, 49, 51, 54,
+   58, then 103 ... - this ramp ends at 96). In section 9 they were attributed to the display pipeline's
+   linear -> PQ re-encode being exact only to +-1 code near black, which a ramp of discrete code centres exposes as
+   skips and a continuous ramp absorbs as step-width jitter. That fits here: the HDR10 swapchain holds discrete
+   10-bit codes, the FP16 ramp is continuous (its step widths vary 33 ... 48 px, no skip). It suggests that on this
+   GPU the R10G10B10A2 surface also goes through a PQ -> linear -> PQ stage on scanout. This is an inference from the
+   matching code list, not a measurement of that stage.
+4. With the dither of path D the same error is present but invisible: the time average has no skipped code.
+5. The visual impression on the reference monitor (path H) matches the capture.
+
+### Consequences
+
+* "Ampere is not comparable / unsuitable for code-level capture" (section 7) holds **for the direct connection to
+  this capture card**. Behind the Integral 2 the RTX 3070 delivers a static 10-bit signal that can be compared code
+  by code.
+* For near-black evaluation on a monitor fed this way, the FP16 scRGB swapchain is the better choice on the
+  RTX 3070 as well.
+* Not tested: which property of the sink path switches the dither off (next step: give the Integral 2 the EDID of
+  the capture card and re-capture), a PresentMon log, a back-buffer readback, the proto pattern of this repository
+  on path H, codes above 96.
+
+### 日本語（近黒ランプ 2026-09-29）
+
+* きっかけ: HDFury Integral 2 経由の基準モニター（Sony BVM）で、近黒の無彩色ランプの漸増性が、HDR10 より scRGB の
+  ほうが良く見えた。§7 では RTX 3070 の 2 つのスワップチェーンは同じ振る舞いだったので、両方の接続で取り込んだ。
+* 環境: RTX 3070（§7 の機体）・ドライバ 616.56・Qt Quick アプリの HDR ビューワ（Qt 6.11.0。本リポジトリの proto
+  パターンではない）・SDR γ2.2 の符号 0〜0.05 の横ランプ・DeckLink 8K Pro G2・60 フレーム・信号は 4 条件とも
+  2160p23.98 RGB444 10bit PQ。**経路 H** = GPU → Integral 2（分配）→ BVM と DeckLink、**経路 D** = GPU → DeckLink 直結。
+  提示経路はアプリの表示（PresentMon 利用）を目視で確認しただけで、**PresentMon のログは取っていない**。
+* 経路 D（直結）: §7 を再現。両スワップチェーンとも全符号が 4 の倍数で、80〜96 % の標本が毎フレーム ±4 で揺れる。
+  時間・行平均は基準に一致（scRGB: 平均 +0.01・σ 0.29、HDR10: 平均 −0.03・σ 0.18。隣の符号との間隔 0.91〜1.11）。
+* 経路 H（Integral 2 経由）: **ディザが無い**（60 フレームで変化した標本 0）。符号は 10bit の格子。scRGB は 0〜96 の
+  97 符号が全部出る。**HDR10 は 10 符号（1, 4, 8, 16, 37, 45, 49, 51, 54, 58）が出ない**（2 コード飛び 10、
+  段幅 34〜82 px）。
+* この 10 符号は、**§9（実験 A）の scRGB 対照の近黒の欠落と同じ一覧**（§9 は 58 の次が 103。今回のランプは 96 まで）。
+  §9 では、表示側のリニア → PQ 再符号化が近黒で ±1 コード精度であることが原因とした。HDR10 のスワップチェーンは
+  離散的な 10bit 符号を持つので欠落として現れ、FP16 の連続ランプは段幅の揺れ（33〜48 px）として吸収される、
+  という説明が今回も当てはまる。RTX 3070 では R10G10B10A2 の面もスキャンアウトで PQ → リニア → PQ を通る、
+  という示唆だが、これは一覧の一致からの推論で、その段を直接測ったものではない。
+* GPU がディザを掛けるかどうかは、世代だけでなく接続先の経路で変わる。何が切り替えているか（GPU が読む EDID・
+  リンクの形式・ディスプレイごとに保存される設定）は**未特定**。Integral 2 の設定は記録していない。
+* アプリ側の計算値には欠落が無い（同じ形の合成ランプで 0〜96 の全符号）。ただしスワップチェーンの読み戻しは
+  していないので、§9 のような証明ではない。
+* 含意: §7 の「Ampere はコード値照合に不向き」は、このキャプチャカードへの直結の場合の話。Integral 2 の後ろでは
+  静止した 10bit 信号になり、符号単位で照合できる。この経路の基準モニターで近黒を評価するなら、RTX 3070 でも
+  scRGB が良い。
+* 未実施: ディザを切り替える条件の特定（次の一手は、Integral 2 にキャプチャカードの EDID を持たせて取り直す）、
+  PresentMon のログ、バックバッファの読み戻し、本リポジトリの proto パターンでの経路 H、符号 96 より上。
+
+---
+
 ## 日本語要約
 
 * 環境: RTX 5090 Laptop（Studio 596.36）→ Vertex → PA32UCDM ＋ DeckLink 4K Extreme 12G。2160p23.98 RGB 4:4:4 10bit PQ。

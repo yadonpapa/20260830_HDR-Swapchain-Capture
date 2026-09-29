@@ -246,7 +246,7 @@ Conclusion
 - §1c（世代切り分け・RTX 3070）への補足。RTX 3070 の出力が接続先の経路で変わること、Integral 2 経由では HDR10 の
   近黒で 10 符号が出ないこと。データ `data/osaka3070nb_*`、詳細 `docs/RESULTS.md` §10。
 - 投稿前に確認すること: (1) Integral 2 の設定（EDID モード・スケーリング）を記録して本文に足す、(2) できれば
-  PresentMon のログを取り直す、(3) 基準モニターの型番の表記（EDID 名は BVM-HX310）。
+  PresentMon のログを取り直す。基準モニターは Sony BVM-HX310。
 
 ```text
 Subject: Addendum 5 - RTX 3070: dither depends on the sink path; without dither the R10G10B10A2 swapchain loses 10 near-black codes that FP16 keeps
@@ -261,7 +261,7 @@ Setup
 - Capture: Blackmagic DeckLink 8K Pro G2 HDMI input, uncompressed 10-bit RGB (r210), 60 frames. Signal in every
   capture: 3840x2160 @ 23.976, RGB 4:4:4 10 bpc, HDR InfoFrame EOTF = PQ.
 - Two connections: (D) GPU HDMI straight into the capture card, as in addendum 2. (H) GPU HDMI -> HDFury
-  Integral 2 (splitter) -> reference monitor + capture card.
+  Integral 2 (splitter) -> reference monitor (Sony BVM-HX310) + capture card.
 - The application's PresentMon-based indicator showed Independent Flip in all four cases. I did not record a
   PresentMon log this time.
 

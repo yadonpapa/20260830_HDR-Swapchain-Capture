@@ -352,7 +352,7 @@ YCbCr 4:2:2 8 bpc — set 23.976 Hz first, then RGB 10 bpc). PROCEDURE.md §8 it
 
 ## 10. Near-black ramp on the RTX 3070 (2026-09-29): the output depends on the sink path - dither when connected directly, plain 10-bit codes through an HDFury Integral 2 - and the HDR10 swapchain then loses 10 near-black codes
 
-Trigger: on a reference monitor (Sony BVM) fed through an HDFury Integral 2, a near-black achromatic ramp looked
+Trigger: on a reference monitor (Sony BVM-HX310) fed through an HDFury Integral 2, a near-black achromatic ramp looked
 smoother (more evenly increasing) with the FP16 scRGB swapchain than with the HDR10 swapchain - on the **RTX 3070**,
 where section 7 had found the two swapchains to behave identically. The signal was captured in both connection
 variants (`data/osaka3070nb_*`, `data/osaka3070nb_summary.json`, report tool `tools/nearblack_report.py`).
@@ -366,7 +366,7 @@ variants (`data/osaka3070nb_*`, `data/osaka3070nb_summary.json`, report tool `to
   recorded (about 200 nit, inferred from the top code 96).
 * Capture: DeckLink 8K Pro G2 HDMI input, r210, 60 frames. Detected signal in all four captures:
   `2160p23.98 RGB444+10bit hdr_present=1 eotf=2`
-* **Path H**: GPU HDMI -> **HDFury Integral 2** (used as a splitter) -> BVM + DeckLink. Windows display name
+* **Path H**: GPU HDMI -> **HDFury Integral 2** (used as a splitter) -> Sony BVM-HX310 + DeckLink. Windows display name
   `BVM-HX310`, HDR on. **Path D**: GPU HDMI -> DeckLink directly (as in section 7). Windows display name `BMD HDMI`,
   HDR on.
 * Presentation path: the application's PresentMon-based indicator showed Independent Flip for every capture (read
@@ -424,11 +424,11 @@ The source was not read back from the swapchain, so this is a computation, not a
 
 ### 日本語（近黒ランプ 2026-09-29）
 
-* きっかけ: HDFury Integral 2 経由の基準モニター（Sony BVM）で、近黒の無彩色ランプの漸増性が、HDR10 より scRGB の
+* きっかけ: HDFury Integral 2 経由の基準モニター（Sony BVM-HX310）で、近黒の無彩色ランプの漸増性が、HDR10 より scRGB の
   ほうが良く見えた。§7 では RTX 3070 の 2 つのスワップチェーンは同じ振る舞いだったので、両方の接続で取り込んだ。
 * 環境: RTX 3070（§7 の機体）・ドライバ 616.56・Qt Quick アプリの HDR ビューワ（Qt 6.11.0。本リポジトリの proto
   パターンではない）・SDR γ2.2 の符号 0〜0.05 の横ランプ・DeckLink 8K Pro G2・60 フレーム・信号は 4 条件とも
-  2160p23.98 RGB444 10bit PQ。**経路 H** = GPU → Integral 2（分配）→ BVM と DeckLink、**経路 D** = GPU → DeckLink 直結。
+  2160p23.98 RGB444 10bit PQ。**経路 H** = GPU → Integral 2（分配）→ BVM-HX310 と DeckLink、**経路 D** = GPU → DeckLink 直結。
   提示経路はアプリの表示（PresentMon 利用）を目視で確認しただけで、**PresentMon のログは取っていない**。
 * 経路 D（直結）: §7 を再現。両スワップチェーンとも全符号が 4 の倍数で、80〜96 % の標本が毎フレーム ±4 で揺れる。
   時間・行平均は基準に一致（scRGB: 平均 +0.01・σ 0.29、HDR10: 平均 −0.03・σ 0.18。隣の符号との間隔 0.91〜1.11）。

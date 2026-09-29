@@ -58,7 +58,7 @@ the same path is exact within ±1 code (no mid‑tone skip). The quantiser is be
 **Near-black ramp on the RTX 3070, 2026-09-29** (`docs/RESULTS.md` section 10, `data/osaka3070nb_*`): whether the
 RTX 3070 dithers depends on the sink path. Connected **directly** to the DeckLink 8K Pro G2 it reproduces the
 generation control (8-bit lattice, +-4 dither on 80 ... 96 % of the samples, time average within one code of the
-reference for both swapchains). **Through an HDFury Integral 2** (splitter in front of a Sony BVM) the same GPU
+reference for both swapchains). **Through an HDFury Integral 2** (splitter in front of a Sony BVM-HX310) the same GPU
 emits **plain 10-bit codes with no dither at all** - and then the **HDR10 swapchain loses 10 near-black codes
 (1, 4, 8, 16, 37, 45, 49, 51, 54, 58) while FP16 scRGB shows every code 0..96**. The list is exactly the near-black
 skip list of the scRGB control of Experiment A. Source was an application ramp (not the proto pattern), no
@@ -163,7 +163,7 @@ Present 直前に読み戻して**80/80 ビット一致**（全コード 0..846 
 
 **近黒ランプ・RTX 3070（2026-09-29）**（`docs/RESULTS.md` §10・`data/osaka3070nb_*`）: RTX 3070 がディザを掛けるか
 どうかは接続先の経路で変わる。DeckLink 8K Pro G2 へ**直結**すると世代切り分けの結果を再現する（8bit 格子・80〜96 % の
-標本が ±4 で揺れる・時間平均は両スワップチェーンとも基準に ±1 コード未満で一致）。**HDFury Integral 2 経由**（Sony BVM の
+標本が ±4 で揺れる・時間平均は両スワップチェーンとも基準に ±1 コード未満で一致）。**HDFury Integral 2 経由**（Sony BVM-HX310 の
 手前の分配器）では、同じ GPU が**ディザの無い 10bit 符号**を出し、そのとき **HDR10 は近黒の 10 符号
 （1, 4, 8, 16, 37, 45, 49, 51, 54, 58）が出ず、FP16 scRGB は 0〜96 の全符号が出る**。この一覧は実験 A の scRGB 対照の
 近黒の欠落と同じ。信号源はアプリのランプ（proto パターンではない）、PresentMon のログ無し、ディザが切り替わる原因は

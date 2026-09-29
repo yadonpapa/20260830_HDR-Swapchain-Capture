@@ -9,7 +9,7 @@
     "capture": "Blackmagic DeckLink 8K Pro G2 (PCIe) HDMI input, r210, 60 frames after 10 skipped",
     "signal": "2160p23.98 RGB 4:4:4 10 bit, HDR InfoFrame eotf=PQ (DeckLink detection, identical for all four captures)",
     "paths": {
-      "hdfury": "GPU HDMI -> HDFury Integral 2 used as a splitter -> Sony BVM (EDID name BVM-HX310) and the DeckLink input. Windows showed the display as 'BVM-HX310', HDR on, SDR white 204 nit. Integral 2 settings (EDID mode, scaling, HDCP) were not recorded.",
+      "hdfury": "GPU HDMI -> HDFury Integral 2 used as a splitter -> Sony BVM-HX310 and the DeckLink input. Windows showed the display as 'BVM-HX310', HDR on, SDR white 204 nit. Integral 2 settings (EDID mode, scaling, HDCP) were not recorded.",
       "direct": "GPU HDMI -> DeckLink input directly (as on 2026-09-04). Windows showed the display as 'BMD HDMI', HDR on, SDR white 204 nit."
     },
     "path_verification": "the application's PresentMon-based indicator showed Independent Flip for all four captures (read by the operator); no PresentMon log was recorded",
